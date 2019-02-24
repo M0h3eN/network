@@ -63,3 +63,4 @@ def raw_neuronal_data_info_compute(data, args):
     plotBar(mivaluesStim, writePathMi + 'barWithStim')
 
 
+
