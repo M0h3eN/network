@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import scipy.io as sio
 import scipy.signal as sig
-from .mat_to_dict import loadmat
-from pymongo import MongoClient
+# from .mat_to_dict import loadmat
+# from pymongo import MongoClient
 from bokeh.layouts import gridplot
 from bokeh.models import ColumnDataSource, Span, Label
 from bokeh.palettes import Reds4, Blues4
@@ -44,10 +44,10 @@ def generateEyeDF(eye):
 
 # assemble data in all neurons
 
-def assembleData(directory, args):
+def assembleData(directory):
 
-    client = MongoClient("mongodb://" + args.host + ':' + args.port)
-    preProcDB = client.preProccesing
+    # client = MongoClient("mongodb://" + args.host + ':' + args.port)
+    # preProcDB = client.preProccesing
 
     dirr = directory
     os.chdir(dirr)
@@ -61,7 +61,7 @@ def assembleData(directory, args):
         filename = os.fsdecode(file)
         if filename.endswith('.mat'):
             print('File:' + filename)
-            preProcDB['Raw_Data'].insert_one(loadmat(filename).get('Res'))
+            #preProcDB['Raw_Data'].insert_one(loadmat(filename).get('Res'))
             matData = sio.loadmat(filename)
             dictVal = matData.get('Res')
             Eye = dictVal['Eye']
@@ -170,16 +170,12 @@ def computerFrAll(neurons_df, period):
         for it in range(lend):
             sep_by_cond[it] = [computeFr(conditionSelect(neurons_df[it],
                                                          'inStim'), 0, 3000),
-            #(neurons_df[it].columns.get_loc("Cond") - 1)),
                                computeFr(conditionSelect(neurons_df[it],
                                                          'outStim'), 0, 3000),
-            #(neurons_df[it].columns.get_loc("Cond") - 1)),
                                computeFr(conditionSelect(neurons_df[it],
                                                          'inNoStim'), 0, 3000),
-#(neurons_df[it].columns.get_loc("Cond") - 1)),
                                computeFr(conditionSelect(neurons_df[it],
                                                          'outNoStim'), 0, 3000)]
-#(neurons_df[it].columns.get_loc("Cond") - 1))
     else:
         for it in range(lend):
             inStimDF = conditionSelect(saccade_data_frame[it], 'inStim')
@@ -202,16 +198,12 @@ def computerSpkCountAll(neurons_df, period):
         for it in range(lend):
             sep_by_cond[it] = [computeSpikeCount(conditionSelect(neurons_df[it],
                                                          'inStim'), 0, 3000),
-            #(neurons_df[it].columns.get_loc("Cond") - 1)),
                                computeSpikeCount(conditionSelect(neurons_df[it],
                                                          'outStim'), 0, 3000),
-            #(neurons_df[it].columns.get_loc("Cond") - 1)),
                                computeSpikeCount(conditionSelect(neurons_df[it],
                                                          'inNoStim'), 0, 3000),
-#(neurons_df[it].columns.get_loc("Cond") - 1)),
                                computeSpikeCount(conditionSelect(neurons_df[it],
                                                          'outNoStim'), 0, 3000)]
-#(neurons_df[it].columns.get_loc("Cond") - 1))
     else:
         for it in range(lend):
             inStimDF = conditionSelect(saccade_data_frame[it], 'inStim')
@@ -261,6 +253,46 @@ def computerFrAllDict(neurons_df):
                                   saccade_data_frame[it].columns.get_loc('Cond'
                                   ) - 1).to_dict('list'),
             'outNoStim': computeFr(outNoStimDF, 0,
+                                   saccade_data_frame[it].columns.get_loc('Cond'
+                                   ) - 1).to_dict('list'),
+            }})
+
+
+def computeSpikeCountDict(neurons_df):
+    lend = len(neurons_df)
+    saccade_data_frame = saccade_df(neurons_df)
+    sep_by_cond = []
+
+    for it in range(lend):
+
+        inStimDF = conditionSelect(saccade_data_frame[it], 'inStim')
+        outStimDF = conditionSelect(saccade_data_frame[it], 'outStim')
+        inNoStimDF = conditionSelect(saccade_data_frame[it], 'inNoStim')
+        outNoStimDF = conditionSelect(saccade_data_frame[it],
+                'outNoStim')
+
+        sep_by_cond.append({'visual': {
+            'inStim': computeSpikeCount(conditionSelect(neurons_df[it], 'inStim'
+                                ), 0, 3000).to_dict('list'),
+            'outStim': computeSpikeCount(conditionSelect(neurons_df[it],
+                                 'outStim'), 0, 3000).to_dict('list'),
+            'inNoStim': computeSpikeCount(conditionSelect(neurons_df[it],
+                                  'inNoStim'), 0, 3000).to_dict('list'
+                    ),
+            'outNoStim': computeSpikeCount(conditionSelect(neurons_df[it],
+                                   'outNoStim'), 0, 3000).to_dict('list'
+                    ),
+            }, 'saccade': {
+            'inStim': computeSpikeCount(inStimDF, 0,
+                                saccade_data_frame[it].columns.get_loc('Cond'
+                                ) - 1).to_dict('list'),
+            'outStim': computeSpikeCount(outStimDF, 0,
+                                 saccade_data_frame[it].columns.get_loc('Cond'
+                                 ) - 1).to_dict('list'),
+            'inNoStim': computeSpikeCount(inNoStimDF, 0,
+                                  saccade_data_frame[it].columns.get_loc('Cond'
+                                  ) - 1).to_dict('list'),
+            'outNoStim': computeSpikeCount(outNoStimDF, 0,
                                    saccade_data_frame[it].columns.get_loc('Cond'
                                    ) - 1).to_dict('list'),
             }})

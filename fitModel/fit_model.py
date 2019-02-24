@@ -34,14 +34,8 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     # Compute the mutual information
 
     saccade_data_set = saccade_df(completeData)
-    mivaluesDict = dict(Stim=computeMI(completeData, saccade_data_set, 'Stim').to_dict('list'),
-                                 NoStim=computeMI(completeData, saccade_data_set, 'NoStim').to_dict('list'))
     mivalues = dict(Stim=computeMI(completeData, saccade_data_set, 'Stim'),
                                  NoStim=computeMI(completeData, saccade_data_set, 'NoStim'))
-
-    # Mutual Information ingestion
-
-    MutualInformation['Mi'].insert_one(mivaluesDict)
 
     # Chain loop
     for chain in range(chainsNumber):
