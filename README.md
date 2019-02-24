@@ -40,4 +40,5 @@ npm install --unsafe-perm -g phantomjs-prebuilt electron@1.8.4 orca
 #!/bin/bash
 xvfb-run -a /root/Downloads/orca-1.2.1-x86_64.AppImage "$@"
 ```
+
 * cp it in /bin
