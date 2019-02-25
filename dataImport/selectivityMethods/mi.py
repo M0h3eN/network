@@ -139,7 +139,7 @@ def plotBar(DF, file_name):
     )
     
     fig = go.Figure(data=data, layout=layout)
-    pio.write_image(fig, filename=str(file_name) + '.svg')
+    pio.write_image(fig, file = str(file_name) + '.svg')
     
     
 def plotBarGraphCentrality(DF, mostCenIndex, file_name):

@@ -26,7 +26,6 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     diagnosticValuesDB = client.MCMC_diag
     GraphDB = client.Graph
     EstimatedGrapgDB = client.Estimation
-    MutualInformation = client.MutualInformation
 
 
     period, data = zip(*spikesData.items())
@@ -168,16 +167,6 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
 
             EstimatedGrapgDB[colNameDiag].insert_one(dict(zip(WeKeys,
                                                               list(np.array(W_effective_mean.flatten(), "float")))))
-
-
-
-            # set week weight element to zero
-
-            # for (a1, b1) in np.ndindex(A_mean.shape):
-            #     if A_mean[a1, b1] <= 0.5:
-            #         A_mean[a1, b1] = 0
-            #
-            # W_effective_mean = A_mean * W_mean
 
             # Create Graph Objects
             typ = nx.DiGraph()

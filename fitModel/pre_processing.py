@@ -2,7 +2,7 @@ import os
 from bokeh.io import export_png
 
 from pymongo import MongoClient
-from dataImport.commons.basicFunctions import computerFrAll, computerFrAllDict, computeSpikeCountDict, createPlotDF, \
+from dataImport.commons.basicFunctions import computerFrAll, computerFrAllDict, computeSpikeCountALLDict, createPlotDF, \
     plotFun, saccade_df
 from dataImport.selectivityMethods.mi import computeMI, plotScat, plotBar
 
@@ -23,7 +23,7 @@ def raw_neuronal_data_info_compute(data, args):
 
     # Mongo Configs
     client = MongoClient("mongodb://" + args.host + ':' + args.port)
-    pre_proccess_db = client.neuronalDataInfo
+    pre_proccess_db = client.neuralDataInfo
 
     # inserting Raw data
     #TODO must create an schema for raw data to insert many based on time or trials
@@ -40,7 +40,7 @@ def raw_neuronal_data_info_compute(data, args):
 
 
     # inserting Spike Counts
-    spikeCounts = computeSpikeCountDict(data)
+    spikeCounts = computeSpikeCountALLDict(data)
     pre_proccess_db['spike_count'].insert_many(spikeCounts)
 
     # inserting mutual information

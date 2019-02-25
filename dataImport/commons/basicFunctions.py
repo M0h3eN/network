@@ -137,6 +137,18 @@ def computeSpikeCount(df, min, max):
     dtemp = np.sum(df.iloc[:, min:max])
     return dtemp
 
+def computeFrDict(df, min, max):
+    dtemp = np.mean(df.iloc[:, min:max]) * 1000
+    dtemp = pd.DataFrame(dtemp).reset_index(drop=True)
+    dtemp.columns = ['firing_rate']
+    return dtemp
+
+def computeSpikeCountDict(df, min, max):
+    dtemp = np.sum(df.iloc[:, min:max])
+    dtemp = pd.DataFrame(dtemp).reset_index(drop=True)
+    dtemp.columns = ['spike_count']
+    return dtemp
+
 
 def normalize(DF):
     return (DF - np.min(DF)) / (np.max(DF) - np.min(DF))
@@ -232,33 +244,34 @@ def computerFrAllDict(neurons_df):
                 'outNoStim')
 
         sep_by_cond.append({'visual': {
-            'inStim': computeFr(conditionSelect(neurons_df[it], 'inStim'
+            'inStim': computeFrDict(conditionSelect(neurons_df[it], 'inStim'
                                 ), 0, 3000).to_dict('list'),
-            'outStim': computeFr(conditionSelect(neurons_df[it],
+            'outStim': computeFrDict(conditionSelect(neurons_df[it],
                                  'outStim'), 0, 3000).to_dict('list'),
-            'inNoStim': computeFr(conditionSelect(neurons_df[it],
+            'inNoStim': computeFrDict(conditionSelect(neurons_df[it],
                                   'inNoStim'), 0, 3000).to_dict('list'
                     ),
-            'outNoStim': computeFr(conditionSelect(neurons_df[it],
+            'outNoStim': computeFrDict(conditionSelect(neurons_df[it],
                                    'outNoStim'), 0, 3000).to_dict('list'
                     ),
             }, 'saccade': {
-            'inStim': computeFr(inStimDF, 0,
+            'inStim': computeFrDict(inStimDF, 0,
                                 saccade_data_frame[it].columns.get_loc('Cond'
                                 ) - 1).to_dict('list'),
-            'outStim': computeFr(outStimDF, 0,
+            'outStim': computeFrDict(outStimDF, 0,
                                  saccade_data_frame[it].columns.get_loc('Cond'
                                  ) - 1).to_dict('list'),
-            'inNoStim': computeFr(inNoStimDF, 0,
+            'inNoStim': computeFrDict(inNoStimDF, 0,
                                   saccade_data_frame[it].columns.get_loc('Cond'
                                   ) - 1).to_dict('list'),
-            'outNoStim': computeFr(outNoStimDF, 0,
+            'outNoStim': computeFrDict(outNoStimDF, 0,
                                    saccade_data_frame[it].columns.get_loc('Cond'
                                    ) - 1).to_dict('list'),
             }})
+    return sep_by_cond
 
 
-def computeSpikeCountDict(neurons_df):
+def computeSpikeCountALLDict(neurons_df):
     lend = len(neurons_df)
     saccade_data_frame = saccade_df(neurons_df)
     sep_by_cond = []
@@ -272,32 +285,32 @@ def computeSpikeCountDict(neurons_df):
                 'outNoStim')
 
         sep_by_cond.append({'visual': {
-            'inStim': computeSpikeCount(conditionSelect(neurons_df[it], 'inStim'
+            'inStim': computeSpikeCountDict(conditionSelect(neurons_df[it], 'inStim'
                                 ), 0, 3000).to_dict('list'),
-            'outStim': computeSpikeCount(conditionSelect(neurons_df[it],
+            'outStim': computeSpikeCountDict(conditionSelect(neurons_df[it],
                                  'outStim'), 0, 3000).to_dict('list'),
-            'inNoStim': computeSpikeCount(conditionSelect(neurons_df[it],
+            'inNoStim': computeSpikeCountDict(conditionSelect(neurons_df[it],
                                   'inNoStim'), 0, 3000).to_dict('list'
                     ),
-            'outNoStim': computeSpikeCount(conditionSelect(neurons_df[it],
+            'outNoStim': computeSpikeCountDict(conditionSelect(neurons_df[it],
                                    'outNoStim'), 0, 3000).to_dict('list'
                     ),
             }, 'saccade': {
-            'inStim': computeSpikeCount(inStimDF, 0,
+            'inStim': computeSpikeCountDict(inStimDF, 0,
                                 saccade_data_frame[it].columns.get_loc('Cond'
                                 ) - 1).to_dict('list'),
-            'outStim': computeSpikeCount(outStimDF, 0,
+            'outStim': computeSpikeCountDict(outStimDF, 0,
                                  saccade_data_frame[it].columns.get_loc('Cond'
                                  ) - 1).to_dict('list'),
-            'inNoStim': computeSpikeCount(inNoStimDF, 0,
+            'inNoStim': computeSpikeCountDict(inNoStimDF, 0,
                                   saccade_data_frame[it].columns.get_loc('Cond'
                                   ) - 1).to_dict('list'),
-            'outNoStim': computeSpikeCount(outNoStimDF, 0,
+            'outNoStim': computeSpikeCountDict(outNoStimDF, 0,
                                    saccade_data_frame[it].columns.get_loc('Cond'
                                    ) - 1).to_dict('list'),
             }})
 
-
+    return sep_by_cond
 """
 0 -> inStim
 1 -> outStim

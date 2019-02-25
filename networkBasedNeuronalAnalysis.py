@@ -1,8 +1,9 @@
 import os
 import numpy as np
 from argparse import ArgumentParser
-
+from dataImport.commons.basicFunctions import assembleData, conditionSelect
 from fitModel.fit_model import fit_model_discrete_time_network_hawkes_spike_and_slab
+from fitModel.pre_processing import raw_neuronal_data_info_compute
 
 
 parser = ArgumentParser(description='This is a Python program for analysis on network of neurons to '
@@ -48,7 +49,7 @@ args = parser.parse_args()
 
 # read all neurons
 dirr = os.fsencode(args.data)
-allNeurons =  assembleData(dirr)
+allNeurons = assembleData(dirr)
 
 # align end date
 minTime = np.min([allNeurons[x].shape[1] for x in range(len(allNeurons))])
@@ -86,19 +87,12 @@ neuronalData = {'Enc-In-NoStim': np.array([conditionSelect(allNeurons[b], 'inNoS
 
 network_hypers = {"p": args.sparsity, "allow_self_connections": args.self}
 
+# get neural data information
+raw_neuronal_data_info_compute(allNeurons, args)
 
 # fit model
-
-# Chain loop
-
-# for chain in range(args.chain):
-#     fit_par = partial(fit_model_discrete_time_network_hawkes_spike_and_slab, *[args.lag, network_hypers,
-#                                                                                args.iter, data, period, allNeurons,
-#                                                                                chain,
-#                                                                                args])
-
-fit_model_discrete_time_network_hawkes_spike_and_slab(args.lag, network_hypers, args.iter, neuronalData,
-                                                      allNeurons, 1, args)
+fit_model_discrete_time_network_hawkes_spike_and_slab(args.lag, network_hypers,
+                                                      args.iter, neuronalData, allNeurons, args.chain, args)
 
 # Gelman-Rubin convergence statistics
 
