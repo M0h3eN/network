@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from argparse import ArgumentParser
-from dataImport.commons.basicFunctions import assembleData, conditionSelect
+
 from fitModel.fit_model import fit_model_discrete_time_network_hawkes_spike_and_slab
 
 
@@ -48,7 +48,7 @@ args = parser.parse_args()
 
 # read all neurons
 dirr = os.fsencode(args.data)
-allNeurons = assembleData(dirr)
+allNeurons =  assembleData(dirr)
 
 # align end date
 minTime = np.min([allNeurons[x].shape[1] for x in range(len(allNeurons))])

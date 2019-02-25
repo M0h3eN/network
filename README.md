@@ -8,6 +8,8 @@ This work is based on Hawkes process maintained in pyhawkes package.
 ## Python packages for build 
 
 ```bash
+pip uninstall pybasicbayes
+pip install git+https://github.com/mattjj/pybasicbayes.git
 pip install numpy Cython
 ```
  
