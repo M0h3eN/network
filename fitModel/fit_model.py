@@ -5,6 +5,8 @@ from fitModel.plot_network import plot_network
 from bokeh.io import export_png
 from pymongo import MongoClient
 from networkx.readwrite import json_graph
+from multiprocessing import Pool, cpu_count
+
 import os
 import numpy as np
 import networkx as nx
@@ -17,8 +19,10 @@ pio.orca.ensure_server()
 time.sleep(10)
 
 
-def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, spikesData, completeData, chainsNumber, args):
-
+def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, period,
+                                                          data, completeData, tempPath,
+                                                          args, mivalues,
+                                                          chain, per):
     # MongoDB connection config
 
     client = MongoClient("mongodb://" + args.host + ':' + args.port)
@@ -27,170 +31,150 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     GraphDB = client.Graph
     EstimatedGrapgDB = client.Estimation
 
+    writePath = tempPath + '/' + period[per]
+    if not os.path.exists(writePath):
+        os.makedirs(writePath)
 
-    period, data = zip(*spikesData.items())
+    writePath = writePath + '/'
 
-    # Compute the mutual information
+    print('State:', '**** ', period[per], 'CHAIN: ', str(chain), ' ****')
 
-    saccade_data_set = saccade_df(completeData)
-    mivalues = dict(Stim=computeMI(completeData, saccade_data_set, 'Stim'),
-                                 NoStim=computeMI(completeData, saccade_data_set, 'NoStim'))
+    k = data[per].shape[1]
 
-    # Chain loop
-    for chain in range(chainsNumber):
+    model = DiscreteTimeNetworkHawkesModelSpikeAndSlab(
+        K=k, dt_max=dtmax,
+        network_hypers=hypers)
+    assert model.check_stability()
 
-        writePath = args.write + 'Chain' + str(chain + 1)
-        if not os.path.exists(writePath):
-            os.makedirs(writePath)
-        tempPath = writePath
+    model.add_data(data[per])
 
-        for per in range(len(period)):
-            # directory management
-            writePath = tempPath + '/' + period[per]
-            if not os.path.exists(writePath):
-                os.makedirs(writePath)
+    ###########################################################
+    # Fit the test model with Gibbs sampling
+    ###########################################################
 
-            writePath = writePath + '/'
+    samples = []
+    lps = []
 
-            print('State:', '**** ', period[per], 'CHAIN: ', str(chain), ' ****')
+    for itr in range(itter):
+        # print("Gibbs iteration ", itr)
+        model.resample_model()
+        lps.append(model.log_probability())
+        samples.append(model.copy_sample())
 
-            k = data[per].shape[1]
+    # def analyze_samples(true_model, samples, lps):
+    N_samples = len(samples)
+    B = samples[1].impulse_model.B
 
-            model = DiscreteTimeNetworkHawkesModelSpikeAndSlab(
-                K=k, dt_max=dtmax,
-                network_hypers=hypers)
-            assert model.check_stability()
+    # Ingestion each model MCMC samples to mongoDB
 
-            model.add_data(data[per])
+    Akeys = []
+    Wkeys = []
+    WeKeys = []
+    for i in range(k):
+        for j in range(k):
+            Akeys.append("a_" + str(i + 1) + ',' + str(j + 1))
+            Wkeys.append("w_" + str(i + 1) + ',' + str(j + 1))
+            WeKeys.append("we_" + str(i + 1) + ',' + str(j + 1))
 
-            ###########################################################
-            # Fit the test model with Gibbs sampling
-            ###########################################################
+    Imkeys = []
+    for i in range(k):
+        for j in range(k):
+            for p1 in range(B):
+                Imkeys.append("im_" + str(i + 1) + ',' + str(j + 1) + ',' + str(p1 + 1))
 
-            samples = []
-            lps = []
+    LamKeys = []
+    for i in range(k):
+        LamKeys.append("la_" + str(i + 1))
 
-            for itr in range(itter):
-                # print("Gibbs iteration ", itr)
-                model.resample_model()
-                lps.append(model.log_probability())
-                samples.append(model.copy_sample())
+    # Strange, BSON doesnt know about python int
 
-            # def analyze_samples(true_model, samples, lps):
-            N_samples = len(samples)
-            B = samples[1].impulse_model.B
+    allKeys = Akeys + Wkeys + WeKeys + Imkeys + LamKeys
 
-            # Ingestion each model MCMC samples to mongoDB
+    All_samples_param = (
+        [dict(zip(allKeys, (
+                list(np.array(s.weight_model.A.flatten(), "float")) +
+                list(np.array(s.weight_model.W.flatten(), "float")) +
+                list(np.array(s.weight_model.W_effective.flatten(), "float")) +
+                list(np.array(np.reshape(s.impulse_model.g, (k, k, s.impulse_model.B)).flatten(),
+                              "float")) +
+                list(np.array(s.bias_model.lambda0.flatten(), "float"))
+        )
+                  )) for s in samples])
 
-            Akeys = []
-            Wkeys = []
-            WeKeys = []
-            for i in range(k):
-                for j in range(k):
-                    Akeys.append("a_" + str(i + 1) + ',' + str(j + 1))
-                    Wkeys.append("w_" + str(i + 1) + ',' + str(j + 1))
-                    WeKeys.append("we_" + str(i + 1) + ',' + str(j + 1))
+    colName = period[per] + '___' + str(chain)
+    paramValuesDB[colName].insert_many(All_samples_param)
 
-            Imkeys = []
-            for i in range(k):
-                for j in range(k):
-                    for p1 in range(B):
-                        Imkeys.append("im_" + str(i + 1) + ',' + str(j + 1) + ',' + str(p1 + 1))
+    A_samples = np.array([s.weight_model.A for s in samples])
+    W_samples = np.array([s.weight_model.W for s in samples])
+    W_effective_sample = np.array([s.weight_model.W_effective for s in samples])
+    LambdaZero_sample = np.array([s.bias_model.lambda0 for s in samples])
+    ImpulseG_sample = np.array([np.reshape(s.impulse_model.g, (k, k, s.impulse_model.B)) for s in samples])
 
-            LamKeys = []
-            for i in range(k):
-                LamKeys.append("la_" + str(i + 1))
+    # DIC evaluation
 
-            # Strange, BSON doesnt know about python int
+    # theta_bar evaluation
 
-            allKeys = Akeys + Wkeys + WeKeys + Imkeys + LamKeys
+    A_mean = A_samples[:, ...].mean(axis=0)
+    W_mean = W_samples[:, ...].mean(axis=0)
+    LambdaZero_mean = LambdaZero_sample[:, ...].mean(axis=0)
+    ImpulseG_mean = ImpulseG_sample[:, ...].mean(axis=0)
 
-            All_samples_param = (
-                [dict(zip(allKeys, (
-                        list(np.array(s.weight_model.A.flatten(), "float")) +
-                        list(np.array(s.weight_model.W.flatten(), "float")) +
-                        list(np.array(s.weight_model.W_effective.flatten(), "float")) +
-                        list(np.array(np.reshape(s.impulse_model.g, (k, k, s.impulse_model.B)).flatten(),
-                                      "float")) +
-                        list(np.array(s.bias_model.lambda0.flatten(), "float"))
-                )
-                          )) for s in samples])
+    logLik = np.array(lps)
 
-            colName = period[per] + '___' + str(chain)
-            paramValuesDB[colName].insert_many(All_samples_param)
+    # D_hat evaluation
 
-            A_samples = np.array([s.weight_model.A for s in samples])
-            W_samples = np.array([s.weight_model.W for s in samples])
-            W_effective_sample = np.array([s.weight_model.W_effective for s in samples])
-            LambdaZero_sample = np.array([s.bias_model.lambda0 for s in samples])
-            ImpulseG_sample = np.array([np.reshape(s.impulse_model.g, (k,k,s.impulse_model.B)) for s in samples])
+    D_hat = -2 * (model.weight_model.log_likelihood(tuple((A_mean, W_mean))) +
+                  model.impulse_model.log_likelihood(ImpulseG_mean) +
+                  model.bias_model.log_likelihood(LambdaZero_mean))
+    D_bar = -2 * np.mean(logLik)
+    pD = D_bar - D_hat
+    pV = np.var(-2 * logLik) / 2
 
-            # DIC evaluation
+    DIC = pD + D_bar
 
-            # theta_bar evaluation
+    modelDiag = {'Model': str(model.__class__).split(".")[2].split("'")[0],
+                 'logLik': lps,
+                 'D_hat': D_hat,
+                 'D_bar': D_bar,
+                 'pD': pD,
+                 'pV': pV,
+                 'DIC': DIC}
 
-            A_mean = A_samples[:, ...].mean(axis=0)
-            W_mean = W_samples[:, ...].mean(axis=0)
-            LambdaZero_mean = LambdaZero_sample[:, ...].mean(axis=0)
-            ImpulseG_mean = ImpulseG_sample[:, ...].mean(axis=0)
+    colNameDiag = period[per] + '___' + str(chain)
+    diagnosticValuesDB[colNameDiag].insert_one(modelDiag)
 
-            logLik = np.array(lps)
+    # Compute sample statistics for second half of samples
 
-            # D_hat evaluation
+    offset = N_samples // 2
+    W_effective_mean = W_effective_sample[offset:, ...].mean(axis=0)
 
-            D_hat = -2 * (model.weight_model.log_likelihood(tuple((A_mean, W_mean))) +
-                    model.impulse_model.log_likelihood(ImpulseG_mean) +
-                    model.bias_model.log_likelihood(LambdaZero_mean))
-            D_bar = -2*np.mean(logLik)
-            pD = D_bar - D_hat
-            pV = np.var(-2*logLik)/2
+    # Insert estimated graph after burnIn phase
 
-            DIC = pD + D_bar
+    EstimatedGrapgDB[colNameDiag].insert_one(dict(zip(WeKeys,
+                                                      list(np.array(W_effective_mean.flatten(), "float")))))
 
-            modelDiag = {'Model': str(model.__class__).split(".")[2].split("'")[0],
-                         'logLik': lps,
-                         'D_hat': D_hat,
-                         'D_bar': D_bar,
-                         'pD': pD,
-                         'pV': pV,
-                         'DIC': DIC}
+    # Create Graph Objects
+    typ = nx.DiGraph()
+    G0 = nx.from_numpy_matrix(W_effective_mean, create_using=typ)
+    G = nx.from_numpy_matrix(15 * W_effective_mean, create_using=typ)
 
-            colNameDiag = period[per] + '___' + str(chain)
-            diagnosticValuesDB[colNameDiag].insert_one(modelDiag)
+    dataGraph = json_graph.adjacency_data(G0)
 
-            # Compute sample statistics for second half of samples
+    colNameGraph = period[per] + '___' + str(chain)
+    GraphDB[colNameGraph].insert_one(dataGraph)
 
-            offset = N_samples // 2
-            W_effective_mean = W_effective_sample[offset:, ...].mean(axis=0)
+    fv = plot_network(G, writePath + 'Network')
 
-            # Insert estimated graph after burnIn phase
+    plotBarGraphCentrality(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformation')
+    plotBarGraphCentralityCompare(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformationCompare')
 
-            EstimatedGrapgDB[colNameDiag].insert_one(dict(zip(WeKeys,
-                                                              list(np.array(W_effective_mean.flatten(), "float")))))
+    # PSTH
 
-            # Create Graph Objects
-            typ = nx.DiGraph()
-            G0 = nx.from_numpy_matrix(W_effective_mean, create_using=typ)
-            G = nx.from_numpy_matrix(15 * W_effective_mean, create_using=typ)
+    visualAndDelay = computerFrAll(completeData, 'vis')
+    saccade = computerFrAll(completeData, 'saccade')
 
-            dataGraph = json_graph.adjacency_data(G0)
-
-            colNameGraph = period[per] + '___' + str(chain)
-            GraphDB[colNameGraph].insert_one(dataGraph)
-
-            fv = plot_network(G, writePath + 'Network')
-
-            plotBarGraphCentrality(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformation')
-            plotBarGraphCentralityCompare(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformationCompare')
-
-            # PSTH
-
-            visualAndDelay = computerFrAll(completeData, 'vis')
-            saccade = computerFrAll(completeData, 'saccade')
-
-            export_png(plotFun(createPlotDF(DF=visualAndDelay, DF2=completeData[0], period='vis', ind=fv),
-                               createPlotDF(DF=saccade, DF2=completeData[fv], period='sac', ind=fv)),
-                       filename=writePath + 'FiringRate' + '.png')
-
+    export_png(plotFun(createPlotDF(DF=visualAndDelay, DF2=completeData[0], period='vis', ind=fv),
+                       createPlotDF(DF=saccade, DF2=completeData[fv], period='sac', ind=fv)),
+               filename=writePath + 'FiringRate' + '.png')
 
 

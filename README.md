@@ -8,17 +8,15 @@ This work is based on Hawkes process maintained in pyhawkes package.
 ## Python packages for build 
 
 ```bash
+pip install numpy Cython
 pip uninstall pybasicbayes
 pip install git+https://github.com/mattjj/pybasicbayes.git
-pip install numpy Cython
 ```
  
 ## Pyhawkes
  
 ```bash
-git clone https://gitlab.com/neuroscience-lab/pyhawkes.git 
-cd pyhawkes 
-pip install -e .
+pip install git+https://gitlab.com/neuroscience-lab/pyhawkes.git
 ```
 ## Requirement for static image save in plotly and bokeh
 
