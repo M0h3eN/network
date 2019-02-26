@@ -6,7 +6,6 @@ from dataImport.commons.basicFunctions import assembleData, conditionSelect, sac
 from dataImport.selectivityMethods.mi import computeMI
 from fitModel.fit_model import fit_model_discrete_time_network_hawkes_spike_and_slab
 from fitModel.pre_processing import raw_neuronal_data_info_compute
-from pymongo import MongoClient
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
@@ -99,7 +98,7 @@ neuronalData = {'Enc-In-NoStim': np.array([conditionSelect(allNeurons[b], 'inNoS
 network_hypers = {"p": args.sparsity, "allow_self_connections": args.self}
 
 # get neural data information
-#raw_neuronal_data_info_compute(allNeurons, args)
+raw_neuronal_data_info_compute(allNeurons, args)
 
 # fit model
 

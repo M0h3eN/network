@@ -1,11 +1,11 @@
-from dataImport.selectivityMethods.mi import computeMI, plotBarGraphCentrality, plotBarGraphCentralityCompare
-from dataImport.commons.basicFunctions import saccade_df, computerFrAll, createPlotDF, plotFun
+from dataImport.selectivityMethods.mi import plotBarGraphCentrality, plotBarGraphCentralityCompare
+from dataImport.commons.basicFunctions import computerFrAll, createPlotDF, plotFun
 from pyhawkes.models import DiscreteTimeNetworkHawkesModelSpikeAndSlab
 from fitModel.plot_network import plot_network
 from bokeh.io import export_png
 from pymongo import MongoClient
 from networkx.readwrite import json_graph
-from multiprocessing import Pool, cpu_count
+
 
 import os
 import numpy as np
