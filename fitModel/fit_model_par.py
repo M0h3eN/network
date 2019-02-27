@@ -155,6 +155,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     G = nx.from_numpy_matrix(15 * W_effective_mean, create_using=typ)
 
     dataGraph = json_graph.adjacency_data(G0)
+    nx.write_gexf(G0, writePath + '.gexf')
 
     colNameGraph = period[per] + '___' + str(chain)
     GraphDB[colNameGraph].insert_one(dataGraph)

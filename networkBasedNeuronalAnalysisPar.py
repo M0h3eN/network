@@ -114,7 +114,7 @@ mivalues = dict(Stim=computeMI(allNeurons, saccade_data_set, 'Stim'),
 
 # Chain loop
 
-writePath = args.write + 'Chain' + str(args.chain + 1)
+writePath = args.write + 'Chain' + str(args.chain)
 if not os.path.exists(writePath):
     os.makedirs(writePath)
 tempPath = writePath
