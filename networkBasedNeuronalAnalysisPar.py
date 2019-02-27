@@ -1,14 +1,20 @@
 import os
 import numpy as np
+import plotly.io as pio
+import time
+import tqdm
 
 from argparse import ArgumentParser
 from dataImport.commons.basicFunctions import assembleData, conditionSelect, saccade_df
 from dataImport.selectivityMethods.mi import computeMI
 from fitModel.fit_model_par import fit_model_discrete_time_network_hawkes_spike_and_slab
-from fitModel.pre_processing import raw_neuronal_data_info_compute
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
+# plotly save configuration
+pio.orca.reset_status()
+pio.orca.ensure_server()
+time.sleep(10)
 
 
 parser = ArgumentParser(description='This is a Python program for analysis on network of neurons to '
@@ -17,7 +23,6 @@ parser = ArgumentParser(description='This is a Python program for analysis on ne
 
 parser.add_argument('-d', '--data',  action='store',
                     dest='data', help='Raw data directory')
-
 
 parser.add_argument('-H', '--host', action='store',
                     dest='host', help='MongoDB host name')
@@ -97,9 +102,6 @@ neuronalData = {'Enc-In-NoStim': np.array([conditionSelect(allNeurons[b], 'inNoS
 
 network_hypers = {"p": args.sparsity, "allow_self_connections": args.self}
 
-# get neural data information
-raw_neuronal_data_info_compute(allNeurons, args)
-
 # fit model
 
 period, data = zip(*neuronalData.items())
@@ -111,24 +113,21 @@ mivalues = dict(Stim=computeMI(allNeurons, saccade_data_set, 'Stim'),
                 NoStim=computeMI(allNeurons, saccade_data_set, 'NoStim'))
 
 # Chain loop
-for chain in range(args.chain):
 
-    writePath = args.write + 'Chain' + str(chain + 1)
-    if not os.path.exists(writePath):
-        os.makedirs(writePath)
-    tempPath = writePath
+writePath = args.write + 'Chain' + str(args.chain + 1)
+if not os.path.exists(writePath):
+    os.makedirs(writePath)
+tempPath = writePath
 
-    # create fit_par partial function
-    fit_par = partial(fit_model_discrete_time_network_hawkes_spike_and_slab,
+# create fit_par partial function
+fit_par = partial(fit_model_discrete_time_network_hawkes_spike_and_slab,
                       *[args.lag, network_hypers, args.iter, period, data, allNeurons,
-                        tempPath, args, mivalues, chain])
-
-    pool.map(fit_par, list(range(len(period))))
+                        tempPath, args, mivalues, args.chain])
 
 
-# Gelman-Rubin convergence statistics
+list(tqdm.tqdm(pool.imap(fit_par, list(range(len(period)))), total=len(period)))
 
-from fitModel.GelmanRubin_convergence import compute_gelman_rubin_convergence
-compute_gelman_rubin_convergence(args)
+pio.orca.shutdown_server()
+
 
 

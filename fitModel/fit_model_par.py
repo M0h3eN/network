@@ -10,13 +10,32 @@ from networkx.readwrite import json_graph
 import os
 import numpy as np
 import networkx as nx
-import plotly.io as pio
-import time
 
 
-# plotly save configuration
-pio.orca.ensure_server()
-time.sleep(10)
+def generate_matrix_indices(k, b):
+    Akeys = []
+    Wkeys = []
+    WeKeys = []
+    for i in range(k):
+        for j in range(k):
+            Akeys.append("a_" + str(i + 1) + ',' + str(j + 1))
+            Wkeys.append("w_" + str(i + 1) + ',' + str(j + 1))
+            WeKeys.append("we_" + str(i + 1) + ',' + str(j + 1))
+
+    Imkeys = []
+    for i in range(k):
+        for j in range(k):
+            for p1 in range(b):
+                Imkeys.append("im_" + str(i + 1) + ',' + str(j + 1) + ',' + str(p1 + 1))
+
+    LamKeys = []
+    for i in range(k):
+        LamKeys.append("la_" + str(i + 1))
+
+    allKeys = Akeys + Wkeys + WeKeys + Imkeys + LamKeys
+
+    return allKeys, Akeys, Wkeys, WeKeys, Imkeys, LamKeys
+
 
 
 def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, period,
@@ -36,8 +55,6 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
         os.makedirs(writePath)
 
     writePath = writePath + '/'
-
-    print('State:', '**** ', period[per], 'CHAIN: ', str(chain), ' ****')
 
     k = data[per].shape[1]
 
@@ -67,28 +84,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
 
     # Ingestion each model MCMC samples to mongoDB
 
-    Akeys = []
-    Wkeys = []
-    WeKeys = []
-    for i in range(k):
-        for j in range(k):
-            Akeys.append("a_" + str(i + 1) + ',' + str(j + 1))
-            Wkeys.append("w_" + str(i + 1) + ',' + str(j + 1))
-            WeKeys.append("we_" + str(i + 1) + ',' + str(j + 1))
-
-    Imkeys = []
-    for i in range(k):
-        for j in range(k):
-            for p1 in range(B):
-                Imkeys.append("im_" + str(i + 1) + ',' + str(j + 1) + ',' + str(p1 + 1))
-
-    LamKeys = []
-    for i in range(k):
-        LamKeys.append("la_" + str(i + 1))
-
-    # Strange, BSON doesnt know about python int
-
-    allKeys = Akeys + Wkeys + WeKeys + Imkeys + LamKeys
+    allKeys, Akeys, Wkeys, WeKeys, Imkeys, LamKeys = generate_matrix_indices(k, B)
 
     All_samples_param = (
         [dict(zip(allKeys, (
