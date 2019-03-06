@@ -88,6 +88,80 @@ def computeMI(DF, saccad_data, stim_status):
                                   mi_sac=miSac))
     return MI_Values
 
+
+def compute_mi_stim_v_nostim(DF, saccad_data, in_status):
+    miVisual = []
+    miMem = []
+    miSac = []
+    # miOutNoStim = []
+    for ni in range(len(DF)):
+        # In
+        if in_status == "IN":
+
+            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allIn"), 1050, 1250)
+            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allIn"), 2500, 2700)
+            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allIn"), 2700, 2950)
+
+            # IN
+
+            stimVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 1050, 1250)
+            stimMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 2500, 2700)
+            stimSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inStim'), 2700, 2950)
+
+            # out
+
+            nostimVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 1050, 1250)
+            nostimMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 2500, 2700)
+            nostimSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inNoStim'), 2700, 2950)
+
+            # noise
+
+            noiseEnVisual = (entropy(stimVisual) + entropy(nostimVisual)) / 2
+            noiseEnMem = (entropy(stimMem) + entropy(nostimMem)) / 2
+            noiseEnSac = (entropy(stimSac) + entropy(nostimSac)) / 2
+
+            # entropy
+
+            miVisual.append(entropy(allVisual) - noiseEnVisual)
+            miMem.append(entropy(allMem) - noiseEnMem)
+            miSac.append(entropy(allSac) - noiseEnSac)
+
+        else:
+
+            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allOut"), 1050, 1250)
+            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allOut"), 2500, 2700)
+            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allOut"), 2700, 2950)
+
+            # OUT
+
+            stimVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 1050, 1250)
+            stimMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 2500, 2700)
+            stimSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outStim'), 2700, 2950)
+
+            # out
+
+            nostimVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 1050, 1250)
+            nostimMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 2500, 2700)
+            nostimSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outNoStim'), 2700, 2950)
+
+            # noise
+
+            noiseEnVisual = (entropy(stimVisual) + entropy(nostimVisual)) / 2
+            noiseEnMem = (entropy(stimMem) + entropy(nostimMem)) / 2
+            noiseEnSac = (entropy(stimSac) + entropy(nostimSac)) / 2
+
+            # entropy
+
+            miVisual.append(entropy(allVisual) - noiseEnVisual)
+            miMem.append(entropy(allMem) - noiseEnMem)
+            miSac.append(entropy(allSac) - noiseEnSac)
+
+    MI_Values = pd.DataFrame(dict(mi_visual=miVisual,
+                                  mi_mem=miMem,
+                                  mi_sac=miSac))
+    return MI_Values
+
+
 '''
 def plotHist(DF, title, col):
     p1 = figure(title=str(title), toolbar_location=None,
