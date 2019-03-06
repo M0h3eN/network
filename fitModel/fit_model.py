@@ -161,7 +161,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
             # Compute sample statistics for second half of samples
 
             offset = N_samples // 2
-            W_effective_mean = W_effective_sample[offset:, ...].mean(axis=0)
+            W_effective_mean = W_effective_sample[offset:, ...].median(axis=0)
 
             # Insert estimated graph after burnIn phase
 
@@ -174,6 +174,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
             G = nx.from_numpy_matrix(15 * W_effective_mean, create_using=typ)
 
             dataGraph = json_graph.adjacency_data(G0)
+            nx.write_gml(G0, period[per] + ".gml")
 
             colNameGraph = period[per] + '___' + str(chain)
             GraphDB[colNameGraph].insert_one(dataGraph)
