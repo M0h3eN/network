@@ -167,6 +167,10 @@ def conditionSelect(df, subStatus):
         dfNew = df[(df['stimStatus'] == 1)]
     elif subStatus == 'allNoStim':
         dfNew = df[(df['stimStatus'] == 0)]
+    elif subStatus == 'allIn':
+        dfNew = df[(df['inOutStatus'] == 1)]
+    elif subStatus == 'allOut':
+        dfNew = df[(df['inOutStatus'] == 0)]
     else:
         dfNew = df[(df['stimStatus'] == 0) & (df['inOutStatus'] == 0)]
     return dfNew
