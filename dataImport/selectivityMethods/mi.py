@@ -117,9 +117,9 @@ def compute_m_index(DF, saccad_data, stim_status):
 
             # Index
 
-            mIndexVisual.append((np.mean(inVisual) - np.mean(outVisual))/allVisual)
-            mIndexMem.append((np.mean(inMem) - np.mean(outMem))/allMem)
-            mIndexSac.append((np.mean(inSac) - np.mean(outSac))/allSac)
+            mIndexVisual.append((np.mean(inVisual) - np.mean(outVisual))/np.mean(allVisual))
+            mIndexMem.append((np.mean(inMem) - np.mean(outMem))/np.mean(allMem))
+            mIndexSac.append((np.mean(inSac) - np.mean(outSac))/np.mean(allSac))
 
             # Without Stim
 
@@ -144,9 +144,9 @@ def compute_m_index(DF, saccad_data, stim_status):
 
             # Index
 
-            mIndexVisual.append((np.mean(inVisual) - np.mean(outVisual)) / allVisual)
-            mIndexMem.append((np.mean(inMem) - np.mean(outMem)) / allMem)
-            mIndexSac.append((np.mean(inSac) - np.mean(outSac)) / allSac)
+            mIndexVisual.append((np.mean(inVisual) - np.mean(outVisual)) / np.mean(allVisual))
+            mIndexMem.append((np.mean(inMem) - np.mean(outMem)) / np.mean(allMem))
+            mIndexSac.append((np.mean(inSac) - np.mean(outSac)) / np.mean(allSac))
 
     MIndex_Values = pd.DataFrame(dict(mIndex_visual=mIndexVisual,
                                   mIndex_mem=mIndexMem,
