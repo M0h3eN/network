@@ -89,6 +89,71 @@ def computeMI(DF, saccad_data, stim_status):
     return MI_Values
 
 
+def compute_m_index(DF, saccad_data, stim_status):
+    mIndexVisual = []
+    mIndexMem = []
+    mIndexSac = []
+    # miOutNoStim = []
+    for ni in range(len(DF)):
+        # With Stim
+        if stim_status == "Stim":
+
+            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allStim"), 1050, 1250)
+            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allStim"), 2500, 2700)
+            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allStim"), 2700, 2950)
+            # allfrNoStim = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 0, 3798)
+            # With Stim
+            # in
+
+            inVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 1050, 1250)
+            inMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 2500, 2700)
+            inSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inStim'), 2700, 2950)
+
+            # out
+
+            outVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 1050, 1250)
+            outMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 2500, 2700)
+            outSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outStim'), 2700, 2950)
+
+            # Index
+
+            mIndexVisual.append((np.mean(inVisual) - np.mean(outVisual))/allVisual)
+            mIndexMem.append((np.mean(inMem) - np.mean(outMem))/allMem)
+            mIndexSac.append((np.mean(inSac) - np.mean(outSac))/allSac)
+
+            # Without Stim
+
+        else:
+
+            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 1050, 1250)
+            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 2500, 2700)
+            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allNoStim"), 2700, 2950)
+            # allfrNoStim = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 0, 3798)
+            # With Stim
+            # in
+
+            inVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 1050, 1250)
+            inMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 2500, 2700)
+            inSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inNoStim'), 2700, 2950)
+
+            # out
+
+            outVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 1050, 1250)
+            outMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 2500, 2700)
+            outSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outNoStim'), 2700, 2950)
+
+            # Index
+
+            mIndexVisual.append((np.mean(inVisual) - np.mean(outVisual)) / allVisual)
+            mIndexMem.append((np.mean(inMem) - np.mean(outMem)) / allMem)
+            mIndexSac.append((np.mean(inSac) - np.mean(outSac)) / allSac)
+
+    MIndex_Values = pd.DataFrame(dict(mIndex_visual=mIndexVisual,
+                                  mIndex_mem=mIndexMem,
+                                  mIndex_sac=mIndexSac))
+    return MIndex_Values
+
+
 def compute_mi_stim_v_nostim(DF, saccad_data, in_status):
     miVisual = []
     miMem = []
