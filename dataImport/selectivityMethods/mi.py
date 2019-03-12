@@ -341,3 +341,52 @@ def plotBarGraphCentralityCompare(DF, mostCenIndex, file_name):
 
     fig = go.Figure(data=data, layout=layout)
     pio.write_image(fig, str(file_name) + '.svg')
+
+
+def plotGroupedBar(df, file_name):
+
+    columnList = list(df.columns)
+    trace1 = go.Bar(
+        x=list(df[columnList[0]].index.map(str)),
+        y=list(df[columnList[0]]),
+        name=columnList[0].split("_")[1]
+    )
+    trace2 = go.Bar(
+        x=list(df[columnList[1]].index.map(str)),
+        y=list(df[columnList[1]]),
+        name=columnList[1].split("_")[1]
+    )
+    trace3 = go.Bar(
+        x=list(df[columnList[2]].index.map(str)),
+        y=list(df[columnList[2]]),
+        name=columnList[2].split("_")[1]
+    )
+
+    data = [trace1, trace2, trace3]
+    layout = go.Layout(
+        width=1350,
+        height=752,
+        barmode='group',
+        xaxis=dict(
+            dtick=1,
+            tickcolor='#000',
+            title='Neuron',
+            titlefont=dict(
+                family='Courier New, monospace',
+                size=18,
+                color='#7f7f7f'
+            )
+        ),
+        yaxis=dict(
+            tickcolor='#000',
+            title='Modularity Index',
+            titlefont=dict(
+                family='Courier New, monospace',
+                size=18,
+                color='#7f7f7f'
+            ))
+    )
+
+    fig = go.Figure(data=data, layout=layout)
+    pio.write_image(fig, str(file_name) + '.svg')
+
