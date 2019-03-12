@@ -1,3 +1,4 @@
+from sklearn.metrics import mutual_info_score
 from dataImport.commons.basicFunctions import  conditionSelect, np, pd, figure, computeSpikeCount
 from scipy.stats import entropy
 import plotly.graph_objs as go
@@ -13,79 +14,56 @@ import plotly.io as pio
 
 
 def computeMI(DF, saccad_data, stim_status):
-    miVisual = []
-    miMem = []
-    miSac = []
+    mutualVisual = []
+    mutualMem = []
+    mutualSac = []
     # miOutNoStim = []
     for ni in range(len(DF)):
         # With Stim
         if stim_status == "Stim":
-            
-            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allStim"), 1050, 1250)
-            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allStim"), 2500, 2700)
-            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allStim"), 2700, 2950)
-            #allfrNoStim = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 0, 3798)
-            # With Stim
+
             # in
-            
+
             inVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 1050, 1250)
             inMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 2500, 2700)
             inSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inStim'), 2700, 2950)
-            
+
             # out
-            
+
             outVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 1050, 1250)
             outMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 2500, 2700)
             outSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outStim'), 2700, 2950)
-            
-            # noise
-            
-            noiseEnVisual = (entropy(inVisual) + entropy(outVisual)) / 2
-            noiseEnMem = (entropy(inMem) + entropy(outMem)) / 2
-            noiseEnSac = (entropy(inSac) + entropy(outSac)) / 2
-            
-            # entropy
-            
-            miVisual.append(entropy(allVisual) - noiseEnVisual)
-            miMem.append(entropy(allMem) - noiseEnMem)
-            miSac.append(entropy(allSac) - noiseEnSac)
+
+            # Mutual Information Score
+
+            mutualVisual.append(mutual_info_score(inVisual, outVisual))
+            mutualMem.append(mutual_info_score(inMem, outMem))
+            mutualSac.append(mutual_info_score(inSac, outSac))
 
             # Without Stim
-            
-        else:
 
-            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 1050, 1250)
-            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 2500, 2700)
-            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allNoStim"), 2700, 2950)
-            #allfrNoStim = computeSpikeCount(conditionSelect(DF[ni], subStatus="allNoStim"), 0, 3798)
-            # With Stim
+        else:
             # in
-            
+
             inVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 1050, 1250)
             inMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 2500, 2700)
             inSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inNoStim'), 2700, 2950)
-            
+
             # out
-            
+
             outVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 1050, 1250)
             outMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 2500, 2700)
             outSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outNoStim'), 2700, 2950)
-            
-            # noise
-            
-            noiseEnVisual = (entropy(inVisual) + entropy(outVisual)) / 2
-            noiseEnMem = (entropy(inMem) + entropy(outMem)) / 2
-            noiseEnSac = (entropy(inSac) + entropy(outSac)) / 2
-            
-            # entropy
-            
-            miVisual.append(entropy(allVisual) - noiseEnVisual)
-            miMem.append(entropy(allMem) - noiseEnMem)
-            miSac.append(entropy(allSac) - noiseEnSac)
 
-    MI_Values = pd.DataFrame(dict(mi_visual=miVisual,
-                                  mi_mem=miMem,
-                                  mi_sac=miSac))
+            # Mutual Information Score
+
+            mutualVisual.append(mutual_info_score(inVisual, outVisual))
+            mutualMem.append(mutual_info_score(inMem, outMem))
+            mutualSac.append(mutual_info_score(inSac, outSac))
+
+    MI_Values = pd.DataFrame(dict(mutual_visual=mutualVisual,
+                                      mutual_mem=mutualMem,
+                                      mutual_sac=mutualSac))
     return MI_Values
 
 
@@ -162,11 +140,6 @@ def compute_mi_stim_v_nostim(DF, saccad_data, in_status):
     for ni in range(len(DF)):
         # In
         if in_status == "IN":
-
-            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allIn"), 1050, 1250)
-            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allIn"), 2500, 2700)
-            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allIn"), 2700, 2950)
-
             # IN
 
             stimVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 1050, 1250)
@@ -179,23 +152,13 @@ def compute_mi_stim_v_nostim(DF, saccad_data, in_status):
             nostimMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 2500, 2700)
             nostimSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inNoStim'), 2700, 2950)
 
-            # noise
+            # Mutual Information Score
 
-            noiseEnVisual = (entropy(stimVisual) + entropy(nostimVisual)) / 2
-            noiseEnMem = (entropy(stimMem) + entropy(nostimMem)) / 2
-            noiseEnSac = (entropy(stimSac) + entropy(nostimSac)) / 2
-
-            # entropy
-
-            miVisual.append(entropy(allVisual) - noiseEnVisual)
-            miMem.append(entropy(allMem) - noiseEnMem)
-            miSac.append(entropy(allSac) - noiseEnSac)
+            miVisual.append(mutual_info_score(stimVisual, nostimVisual))
+            miMem.append(mutual_info_score(stimMem, nostimMem))
+            miSac.append(mutual_info_score(stimSac, nostimSac))
 
         else:
-
-            allVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus="allOut"), 1050, 1250)
-            allMem = computeSpikeCount(conditionSelect(DF[ni], subStatus="allOut"), 2500, 2700)
-            allSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus="allOut"), 2700, 2950)
 
             # OUT
 
@@ -209,17 +172,11 @@ def compute_mi_stim_v_nostim(DF, saccad_data, in_status):
             nostimMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 2500, 2700)
             nostimSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outNoStim'), 2700, 2950)
 
-            # noise
+            # Mutual Information Score
 
-            noiseEnVisual = (entropy(stimVisual) + entropy(nostimVisual)) / 2
-            noiseEnMem = (entropy(stimMem) + entropy(nostimMem)) / 2
-            noiseEnSac = (entropy(stimSac) + entropy(nostimSac)) / 2
-
-            # entropy
-
-            miVisual.append(entropy(allVisual) - noiseEnVisual)
-            miMem.append(entropy(allMem) - noiseEnMem)
-            miSac.append(entropy(allSac) - noiseEnSac)
+            miVisual.append(mutual_info_score(stimVisual, nostimVisual))
+            miMem.append(mutual_info_score(stimMem, nostimMem))
+            miSac.append(mutual_info_score(stimSac, nostimSac))
 
     MI_Values = pd.DataFrame(dict(mi_visual=miVisual,
                                   mi_mem=miMem,
