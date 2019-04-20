@@ -105,6 +105,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     W_effective_sample = np.array([s.weight_model.W_effective for s in samples])
     LambdaZero_sample = np.array([s.bias_model.lambda0 for s in samples])
     ImpulseG_sample = np.array([np.reshape(s.impulse_model.g, (k, k, s.impulse_model.B)) for s in samples])
+    Rate_samples = np.array([s.compute_rate(S=data[per]) for s in samples])
 
     # DIC evaluation
 
@@ -142,7 +143,8 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     # Compute sample statistics for second half of samples
 
     offset = N_samples // 2
-    W_effective_mean = W_effective_sample[offset:, ...].median(axis=0)
+    W_effective_mean = np.median(W_effective_sample[offset:, ...], axis=0)
+    rate_mean = np.mean(Rate_samples[offset:, ...], axis=0)
 
     # Insert estimated graph after burnIn phase
 
