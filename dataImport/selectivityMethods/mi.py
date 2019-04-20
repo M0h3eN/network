@@ -61,9 +61,9 @@ def computeMI(DF, saccad_data, stim_status):
             mutualMem.append(mutual_info_score(inMem, outMem))
             mutualSac.append(mutual_info_score(inSac, outSac))
 
-    MI_Values = pd.DataFrame(dict(mutual_visual=mutualVisual,
-                                      mutual_mem=mutualMem,
-                                      mutual_sac=mutualSac))
+    MI_Values = pd.DataFrame(dict(mi_visual=mutualVisual,
+                                      mi_mem=mutualMem,
+                                      mi_sac=mutualSac))
     return MI_Values
 
 
