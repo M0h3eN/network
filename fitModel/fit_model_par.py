@@ -9,6 +9,7 @@ from networkx.readwrite import json_graph
 
 import os
 import numpy as np
+import pandas as  pd
 import networkx as nx
 
 
@@ -50,11 +51,18 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     GraphDB = client.Graph
     EstimatedGrapgDB = client.Estimation
 
-    writePath = tempPath + '/' + period[per]
-    if not os.path.exists(writePath):
+    writePath = tempPath + '/' + 'Plots' '/' + period[per] + '/'
+    graphPah = tempPath + '/' + 'Network' + '/'
+    ratePath = tempPath + '/' + 'EstimatedRate' + '/'
+
+    if not (os.path.exists(writePath)):
         os.makedirs(writePath)
 
-    writePath = writePath + '/'
+    if not(os.path.exists(graphPah)):
+        os.makedirs(graphPah)
+
+    if not(os.path.exists(ratePath)):
+        os.makedirs(ratePath)
 
     k = data[per].shape[1]
 
@@ -144,7 +152,11 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
 
     offset = N_samples // 2
     W_effective_mean = np.median(W_effective_sample[offset:, ...], axis=0)
-    rate_mean = np.mean(Rate_samples[offset:, ...], axis=0)
+    rate_mean = pd.DataFrame(np.mean(Rate_samples[offset:, ...], axis=0))
+
+    # insert estimated rate in a csv file of dimension T*N
+
+    rate_mean.to_csv(index=False, path_or_buf= ratePath + period[per] + '.csv')
 
     # Insert estimated graph after burnIn phase
 
@@ -157,7 +169,8 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     G = nx.from_numpy_matrix(15 * W_effective_mean, create_using=typ)
 
     dataGraph = json_graph.adjacency_data(G0)
-    nx.write_gml(G0, period[per] + ".gml")
+
+    nx.write_gml(G0, graphPah + period[per] + ".gml")
 
     colNameGraph = period[per] + '___' + str(chain)
     GraphDB[colNameGraph].insert_one(dataGraph)
