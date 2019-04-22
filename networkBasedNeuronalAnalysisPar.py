@@ -83,19 +83,19 @@ neuronalData = {'Enc-In-NoStim': np.array([conditionSelect(allNeurons[b], 'inNoS
                 'Mem-In-Stim': np.array([conditionSelect(allNeurons[b], 'inStim').iloc[:, 2500:2700].sum(axis=0)
                       for b in range(len(allNeurons))]).transpose(),
                 'Sac-In-Stim': np.array([conditionSelect(allNeurons[b], 'inStim').iloc[:, 3150:3350].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
-                'Enc-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 1050:1250].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
-                'Mem-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 2500:2700].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
-                'Sac-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 3150:3350].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
-                'Enc-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 1050:1250].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
-                'Mem-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 2500:2700].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
-                'Sac-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 3150:3350].sum(axis=0)
                       for b in range(len(allNeurons))]).transpose()
+                # 'Enc-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 1050:1250].sum(axis=0)
+                #       for b in range(len(allNeurons))]).transpose(),
+                # 'Mem-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 2500:2700].sum(axis=0)
+                #       for b in range(len(allNeurons))]).transpose(),
+                # 'Sac-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 3150:3350].sum(axis=0)
+                #       for b in range(len(allNeurons))]).transpose(),
+                # 'Enc-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 1050:1250].sum(axis=0)
+                #       for b in range(len(allNeurons))]).transpose(),
+                # 'Mem-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 2500:2700].sum(axis=0)
+                #       for b in range(len(allNeurons))]).transpose(),
+                # 'Sac-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 3150:3350].sum(axis=0)
+                #       for b in range(len(allNeurons))]).transpose()
                 }
 
 # network hyper parameter definition
