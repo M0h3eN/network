@@ -1,8 +1,9 @@
 import os
-from bokeh.io import export_png
+import pandas as pd
 
+from bokeh.io import export_png
 from pymongo import MongoClient
-from dataImport.commons.basicFunctions import computerFrAll, computerFrAllDict, computeSpikeCountALLDict, createPlotDF, \
+from dataImport.commons.basicFunctions import computeFr, computerFrAll, computerFrAllDict, computeSpikeCountALLDict, createPlotDF, \
     plotFun, saccade_df
 from dataImport.selectivityMethods.mi import computeMI, plotScat, plotBar
 
@@ -61,6 +62,28 @@ def raw_neuronal_data_info_compute(data, args):
 
     plotBar(mivaluesNoStim, writePathMi + 'barNo')
     plotBar(mivaluesStim, writePathMi + 'barWithStim')
+
+
+def split_epoch_condition(data, args):
+
+    period, data = zip(*data.items())
+    writePath = args.write
+
+    if not os.path.exists(writePath):
+        os.makedirs(writePath)
+
+    tempPath = writePath
+    fratePath = tempPath + 'Firing Rate' + '/'
+
+    if not os.path.exists(fratePath):
+        os.makedirs(fratePath)
+
+
+    for per in range(len(period)):
+        scountDF = pd.DataFrame(data[per])
+        scountDF.to_csv(index=False, path_or_buf=fratePath + period[per] + '.csv')
+
+
 
 
 
