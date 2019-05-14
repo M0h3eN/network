@@ -9,15 +9,21 @@ stan = function(x, a, b){
   (x - min(x))/(max(x) - min(x))*(b-a) + a
 }
 
+args = commandArgs(TRUE)
+path = as.character(args[1])
+if(!dir.exists(args[2])){
+    dir.create(file.path(args[2]))
+}
+setwd(file.path(args[2]))
 
-netEncStim = read_graph(file = "/home/mohsen/Rdir/GraphGml/Enc-In-Stim___1.gml", format = "gml")
-netEncNoStim = read_graph(file = "/home/mohsen/Rdir/GraphGml/Enc-In-NoStim___1.gml", format = "gml")
+netEncStim = read_graph(file = paste(path, 'Enc-In-Stim.gml', sep=''), format = "gml")
+netEncNoStim = read_graph(file = paste(path, 'Enc-In-NoStim.gml', sep=''), format = "gml")
 
-netMemStim = read_graph(file = "/home/mohsen/Rdir/GraphGml/Mem-In-Stim___1.gml", format = "gml")
-netMemNoStim = read_graph(file = "/home/mohsen/Rdir/GraphGml/Mem-In-NoStim___1.gml", format = "gml")
+netMemStim = read_graph(file = paste(path, 'Mem-In-Stim.gml', sep=''), format = "gml")
+netMemNoStim = read_graph(file = paste(path, 'Mem-In-NoStim.gml', sep=''), format = "gml")
 
-netSaccStim = read_graph(file = "/home/mohsen/Rdir/GraphGml/Sac-In-Stim___1.gml", format = "gml")
-netSacNoStim = read_graph(file = "/home/mohsen/Rdir/GraphGml/Sac-In-NoStim___1.gml", format = "gml")
+netSaccStim = read_graph(file = paste(path, 'Sac-In-Stim.gml', sep=''), format = "gml")
+netSacNoStim = read_graph(file = paste(path, 'Sac-In-NoStim.gml', sep=''), format = "gml")
 
 graphDataList = list(netEncStim, netMemStim, netSaccStim, netEncNoStim, netMemNoStim, netSacNoStim)
 
@@ -65,6 +71,9 @@ graphPlot = function(g, main, type){
   #change arrow size and edge color
   E(g)$arrow.size <- .4
 
+  # Set names to Nx
+  V(g)$label <- sapply(c(1:length(V(g)$label)), function(x) paste("N",x,sep = ''))
+
   #Color scaling function
   c_scale <- colorRamp(c('gray80', 'cyan', 'yellow', 'red'))
   #Applying the color scale to edge weights.
@@ -89,28 +98,42 @@ graphList = c("Visual-Stim","Memory-Stim", "Saccade-Stim",
 
 # Strengh
 svglite(file = "out.svg")
-
-# plot all graph
 par(mfrow=c(2,3), mar=c(1,1,1,1))
-
 for(g in 1:length(graphList)){
-  graphPlot(graphDataList[[g]], graphList[g],"mix")
+  graphPlot(graphDataList[[g]], graphList[g],"strength")
 }
 rsvg_svg("out.svg", "strength.svg")
+file.remove(paste(args[2],'/','out','.svg', sep=''))
+dev.off()
+
+## Writing Graph individualy
+for(g in 1:length(graphList)){
+  svglite(file = paste(g, '.svg', sep=''))
+  graphPlot(graphDataList[[g]], graphList[g],"strength")
+  rsvg_svg(paste(g, '.svg', sep=''), paste('strength-',graphList[g], '.svg', sep=''))
+  file.remove(paste(args[2],'/',g,'.svg', sep=''))
+}
 dev.off()
 
 # hub
 svglite(file = "out1.svg")
-
-# plot all graph
 par(mfrow=c(2,3), mar=c(1,1,1,1))
 
 for(g in 1:length(graphList)){
   graphPlot(graphDataList[[g]], graphList[g],"hub")
 }
 rsvg_svg("out1.svg", "hub.svg")
+file.remove(paste(args[2],'/','out1','.svg', sep=''))
 dev.off()
 
+## Writing Graph individualy
+for(g in 1:length(graphList)){
+  svglite(file = paste(g, '.svg', sep=''))
+  graphPlot(graphDataList[[g]], graphList[g],"hub")
+  rsvg_svg(paste(g, '.svg', sep=''), paste('hub-',graphList[g], '.svg', sep=''))
+  file.remove(paste(args[2],'/',g,'.svg', sep=''))
+}
+dev.off()
 
 # info
 svglite(file = "out2.svg")
@@ -122,8 +145,17 @@ for(g in 1:length(graphList)){
   graphPlot(graphDataList[[g]], graphList[g],"info")
 }
 rsvg_svg("out2.svg", "info.svg")
+file.remove(paste(args[2],'/','out2','.svg', sep=''))
 dev.off()
 
+## Writing Graph individualy
+for(g in 1:length(graphList)){
+  svglite(file = paste(g, '.svg', sep=''))
+  graphPlot(graphDataList[[g]], graphList[g],"info")
+  rsvg_svg(paste(g, '.svg', sep=''), paste('info-',graphList[g], '.svg', sep=''))
+  file.remove(paste(args[2],'/',g,'.svg', sep=''))
+}
+dev.off()
 
 # cluster
 svglite(file = "out3.svg")
@@ -133,6 +165,16 @@ for(g in 1:length(graphList)){
   clusterGraph(graphDataList[[g]], graphList[g])
 }
 rsvg_svg("out3.svg", "cluster.svg")
+file.remove(paste(args[2],'/','out3','.svg', sep=''))
+dev.off()
+
+## Writing Graph individualy
+for(g in 1:length(graphList)){
+  svglite(file = paste(g, '.svg', sep=''))
+  clusterGraph(graphDataList[[g]], graphList[g])
+  rsvg_svg(paste(g, '.svg', sep=''), paste('cluster-',graphList[g], '.svg', sep=''))
+  file.remove(paste(args[2],'/',g,'.svg', sep=''))
+}
 dev.off()
 
 
