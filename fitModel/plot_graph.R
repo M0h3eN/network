@@ -3,7 +3,6 @@ rm(list=ls())
 library(igraph)
 library(svglite)
 library(rsvg)
-library(CINNA)
 
 stan = function(x, a, b){
   (x - min(x))/(max(x) - min(x))*(b-a) + a
@@ -27,27 +26,27 @@ netSacNoStim = read_graph(file = paste(path, 'Sac-In-NoStim.gml', sep=''), forma
 
 graphDataList = list(netEncStim, netMemStim, netSaccStim, netEncNoStim, netMemNoStim, netSacNoStim)
 
-createMixCentrality = function(g){
-
-pr_cent <- proper_centralities(g)
-cen = calculate_centralities(g, include = pr_cent)
-nam = attributes(cen)$names
-
-filterList = function(cen, nam){
-  outList = list()
-  for(x in 1:length(nam)){
-    dat = cen[nam[x]][[1]]
-    if ((!as.logical(sum(is.nan(dat))) && !is.null(dat) && !(var(dat) <= 0.01))){
-      outList[[nam[x]]] = stan(dat, 0, 1)
-    } else next
-  }
-  outList
-}
-
-cenList = as.data.frame(filterList(cen, nam))
-as.numeric(rowMeans(cenList))
-
-}
+# createMixCentrality = function(g){
+#
+# pr_cent <- proper_centralities(g)
+# cen = calculate_centralities(g, include = pr_cent)
+# nam = attributes(cen)$names
+#
+# filterList = function(cen, nam){
+#   outList = list()
+#   for(x in 1:length(nam)){
+#     dat = cen[nam[x]][[1]]
+#     if ((!as.logical(sum(is.nan(dat))) && !is.null(dat) && !(var(dat) <= 0.01))){
+#       outList[[nam[x]]] = stan(dat, 0, 1)
+#     } else next
+#   }
+#   outList
+# }
+#
+# cenList = as.data.frame(filterList(cen, nam))
+# as.numeric(rowMeans(cenList))
+#
+# }
 
 graphPlot = function(g, main, type){
 
@@ -56,12 +55,8 @@ graphPlot = function(g, main, type){
   if(type == "strength"){
 
     deg <- graph.strength(g)
-  } else if(type =="hub"){
-    deg <- hub_score(g)$vector
-  } else if(type =="mix"){
-    deg <- createMixCentrality(g)
   } else{
-    deg <- sna::infocent(dat = as.matrix(as_adjacency_matrix(g)))
+    deg <- hub_score(g)$vector
   }
   V(g)$size <- stan(deg, 10, 30)
 

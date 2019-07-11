@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from argparse import ArgumentParser
-from dataImport.commons.basicFunctions import assembleData, conditionSelect, computeFr
+from dataImport.commons.basicFunctions import assembleData1, conditionSelect, computeFr, evoked_response
 from fitModel.pre_processing import raw_neuronal_data_info_compute, split_epoch_condition
 
 
@@ -25,42 +25,56 @@ args = parser.parse_args()
 
 # read all neurons
 dirr = os.fsencode(args.data)
-allNeurons = assembleData(dirr)
+allNeurons = assembleData1(dirr)
 
 # align end date
 minTime = np.min([allNeurons[x].shape[1] for x in range(len(allNeurons))])
-np.sort(np.array([sum(allNeurons[x].iloc[:, 0:(minTime - 9)].sum()) for x in range(len(allNeurons))]))
+# Find total spike count across all neurons
+number_of_column_added = 3
+sorted_total_spike_count = sorted(tuple([(x, sum(allNeurons[x].iloc[:, 0:(minTime - number_of_column_added)].sum()))
+                                         for x in range(len(allNeurons))]), key=lambda tup: tup[1])
+
+print('**** Total spike count across neurons sorted ascending ****')
+for x in range(len(sorted_total_spike_count)):
+    print('Neuron: ' + str(sorted_total_spike_count[x][0]) +
+          ' Total Spike Count: ' + str(sorted_total_spike_count[x][1]))
 
 # slicing time to decompose Enc, Memory and saccade times
+# Base line start time
+base_line = np.arange(950, 1050)
+# Visual start time
+visual = np.arange(1050, 1250)
+# Memory start time
+memory = np.arange(2500, 2700)
+# Saccade start time
+saccade = np.arange(3150, 3350)
 
-neuronalData = {'Enc-In-NoStim': pd.DataFrame([computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, 1050:1250], 0, abs(1050-1250))
+neuronalData = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
-                'Mem-In-NoStim': pd.DataFrame([computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, 2500:2700], 0, abs(2500-2700))
+                'Mem-In-NoStim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
-                'Sac-In-NoStim': pd.DataFrame([computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, 3150:3350], 0, abs(3150-3350))
+                'Sac-In-NoStim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, saccade]),
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
-                'Enc-In-Stim': pd.DataFrame([computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, 1050:1250], 0, abs(1050-1250))
+                'Enc-In-Stim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, visual]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
-                'Mem-In-Stim': pd.DataFrame([computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, 2500:2700], 0, abs(2500-2700))
+                'Mem-In-Stim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, memory]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
-                'Sac-In-Stim': pd.DataFrame([computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, 3150:3350], 0, abs(3150-3350))
+                'Sac-In-Stim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, saccade]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose()
-                # 'Enc-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 1050:1250].sum(axis=0)
-                #       for b in range(len(allNeurons))]).transpose(),
-                # 'Mem-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 2500:2700].sum(axis=0)
-                #       for b in range(len(allNeurons))]).transpose(),
-                # 'Sac-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 3150:3350].sum(axis=0)
-                #       for b in range(len(allNeurons))]).transpose(),
-                # 'Enc-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 1050:1250].sum(axis=0)
-                #       for b in range(len(allNeurons))]).transpose(),
-                # 'Mem-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 2500:2700].sum(axis=0)
-                #       for b in range(len(allNeurons))]).transpose(),
-                # 'Sac-Out-Stim': np.array([conditionSelect(allNeurons[b], 'outStim').iloc[:, 3150:3350].sum(axis=0)
-                #       for b in range(len(allNeurons))]).transpose()
-}
+                }
 
 split_epoch_condition(neuronalData, args)
-# get neural data information
-raw_neuronal_data_info_compute(allNeurons, args)
 
 print('**** data ingestion completed ****')

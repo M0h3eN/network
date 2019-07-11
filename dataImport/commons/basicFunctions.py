@@ -46,22 +46,16 @@ def generateEyeDF(eye):
 
 def assembleData(directory):
 
-    # client = MongoClient("mongodb://" + args.host + ':' + args.port)
-    # preProcDB = client.preProccesing
-
     dirr = directory
     os.chdir(dirr)
     iter = 0
     neurons = {}
     allNeurons = {}
-    # spkLenOuter = 0
-    # spkLeninner = 0
 
     for file in os.listdir(dirr):
         filename = os.fsdecode(file)
         if filename.endswith('.mat'):
             print('File:' + filename)
-            #preProcDB['Raw_Data'].insert_one(loadmat(filename).get('Res'))
             matData = sio.loadmat(filename)
             dictVal = matData.get('Res')
             Eye = dictVal['Eye']
@@ -72,11 +66,10 @@ def assembleData(directory):
                 spkLeninner = len(spk[0][0][iter0])
                 for iter2 in range(spkLeninner):
                     arrSize = spk[0][0][iter0][iter2]
-                    # print(spkLen)
                     if arrSize.size > 0:
                         df = pd.DataFrame(spk[0][0][iter0][iter2])
                         if sum(df.sum()) > 2000:
-                            tmp = df  # .iloc[:,0:3799]
+                            tmp = df
                             colName = generatorTemp(tmp.shape[1])
                             tmp.columns = colName
                             neurons[iter] = pd.concat([tmp,
@@ -92,6 +85,33 @@ def assembleData(directory):
                             iter = iter
                             print("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
     return allNeurons
+
+def assembleData1(directory):
+
+    dirr = directory
+    os.chdir(dirr)
+    neurons = {}
+    matData = sio.loadmat('Nu.mat')
+    dictVal = matData['nu']
+    Cond = sio.loadmat('conNU.mat').get('condNU')
+    for iter in range(len(dictVal[0])):
+        arrSize = dictVal[0][iter]
+        if arrSize.size > 0:
+            df = pd.DataFrame(dictVal[0][iter])
+            if sum(df.sum()) > 2000:
+                tmp = df
+                colName = generatorTemp(tmp.shape[1])
+                tmp.columns = colName
+                neurons[iter] = pd.concat([tmp,
+                                           pd.DataFrame(Cond, columns=['Cond'])],
+                                          axis=1)
+                neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
+                neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
+                print("Neuron" + str(iter))
+            else:
+                print("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
+
+    return neurons
 
 
 def saccade_df(neurons_df):
@@ -133,9 +153,22 @@ def computeFr(df, min, max):
     dtemp = np.mean(df.iloc[:, min:max]) * 1000
     return dtemp
 
+
+def computeFr(df):
+    min = 0
+    max = df.shape[1]
+    dtemp = np.mean(df.iloc[:, min:max]) * 1000
+    return dtemp
+
+def evoked_response(df, base_line):
+    evoked = (df - min(base_line)) / (max(df    ) -min(base_line))
+    return evoked
+
+
 def computeSpikeCount(df, min, max):
     dtemp = np.sum(df.iloc[:, min:max])
     return dtemp
+
 
 def computeFrDict(df, min, max):
     dtemp = np.mean(df.iloc[:, min:max]) * 1000

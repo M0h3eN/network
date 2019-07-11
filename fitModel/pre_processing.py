@@ -80,8 +80,8 @@ def split_epoch_condition(data, args):
 
 
     for per in range(len(period)):
-        scountDF = pd.DataFrame(data[per])
-        scountDF.to_csv(index=False, path_or_buf=fratePath + period[per] + '.csv')
+        firing_rate = pd.DataFrame(data[per])
+        firing_rate.to_csv(index=False, path_or_buf=fratePath + period[per] + '.csv')
 
 
 

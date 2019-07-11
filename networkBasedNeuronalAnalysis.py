@@ -51,7 +51,9 @@ allNeurons = assembleData(dirr)
 
 # align end date
 minTime = np.min([allNeurons[x].shape[1] for x in range(len(allNeurons))])
-np.sort(np.array([sum(allNeurons[x].iloc[:, 0:(minTime - 9)].sum()) for x in range(len(allNeurons))]))
+number_of_column_added = 9
+sorted_total_spike_count = sorted(tuple([(x, sum(allNeurons[x].iloc[:, 0:(minTime - number_of_column_added)].sum()))
+                                         for x in range(len(allNeurons))]), key=lambda tup: tup[1])
 
 # slicing time to decompose Enc, Memory and saccade times
 
