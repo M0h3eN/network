@@ -64,9 +64,10 @@ def raw_neuronal_data_info_compute(data, args):
     plotBar(mivaluesStim, writePathMi + 'barWithStim')
 
 
-def split_epoch_condition(data, args):
+def split_epoch_condition(data_fr, data_sc, args):
 
-    period, data = zip(*data.items())
+    period_fr, data_fr = zip(*data_fr.items())
+    period_sc, data_sc= zip(*data_sc.items())
     writePath = args.write
 
     if not os.path.exists(writePath):
@@ -74,14 +75,19 @@ def split_epoch_condition(data, args):
 
     tempPath = writePath
     fratePath = tempPath + 'Firing Rate' + '/'
+    scountPath = tempPath + 'Spike Count' + '/'
 
     if not os.path.exists(fratePath):
         os.makedirs(fratePath)
+    if not os.path.exists(scountPath):
+        os.makedirs(scountPath)
 
 
-    for per in range(len(period)):
-        firing_rate = pd.DataFrame(data[per])
-        firing_rate.to_csv(index=False, path_or_buf=fratePath + period[per] + '.csv')
+    for per in range(len(period_fr)):
+        firing_rate = pd.DataFrame(data_fr[per])
+        spike_count = pd.DataFrame(data_sc[per])
+        firing_rate.to_csv(index=False, path_or_buf=fratePath + period_fr[per] + '.csv')
+        spike_count.to_csv(index=False, path_or_buf=scountPath + period_sc[per] + '.csv')
 
 
 

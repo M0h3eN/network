@@ -1,5 +1,5 @@
 from sklearn.metrics import mutual_info_score
-from dataImport.commons.basicFunctions import  conditionSelect, np, pd, figure, computeSpikeCount
+from dataImport.commons.basicFunctions import conditionSelect, np, pd, figure, computeSpikeCount
 from scipy.stats import entropy
 import plotly.graph_objs as go
 import plotly.io as pio

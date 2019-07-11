@@ -161,11 +161,21 @@ def computeFr(df):
     return dtemp
 
 def evoked_response(df, base_line):
-    evoked = (df - min(base_line)) / (max(df    ) -min(base_line))
+    evoked = (df - min(base_line)) / (max(df) -min(base_line))
+    return evoked
+
+def evoked_response_count(df, base_line):
+    evoked = np.ceil((df - np.mean(base_line)))
     return evoked
 
 
 def computeSpikeCount(df, min, max):
+    dtemp = np.sum(df.iloc[:, min:max])
+    return dtemp
+
+def computeSpikeCount(df):
+    min = 0
+    max = df.shape[1]
     dtemp = np.sum(df.iloc[:, min:max])
     return dtemp
 

@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 
 from argparse import ArgumentParser
-from dataImport.commons.basicFunctions import assembleData1, conditionSelect, computeFr, evoked_response
+from dataImport.commons.basicFunctions import assembleData1, conditionSelect, computeFr, evoked_response,\
+    computeSpikeCount, evoked_response_count
 from fitModel.pre_processing import raw_neuronal_data_info_compute, split_epoch_condition
 
 
@@ -49,7 +50,7 @@ memory = np.arange(2500, 2700)
 # Saccade start time
 saccade = np.arange(3150, 3350)
 
-neuronalData = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
+firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
                     computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
                     computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
@@ -75,6 +76,32 @@ neuronalData = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
                       for b in range(len(allNeurons))]).transpose()
                 }
 
-split_epoch_condition(neuronalData, args)
+spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Mem-In-NoStim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Sac-In-NoStim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, saccade]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Enc-In-Stim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, visual]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Mem-In-Stim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, memory]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Sac-In-Stim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, saccade]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose()
+                }
+
+split_epoch_condition(firingRate, spikeCounts, args)
 
 print('**** data ingestion completed ****')
