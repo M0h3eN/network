@@ -44,11 +44,13 @@ for x in range(len(sorted_total_spike_count)):
 # Base line start time
 base_line = np.arange(950, 1050)
 # Visual start time
-visual = np.arange(1050, 1250)
+visual = np.arange(1051, 1251)
 # Memory start time
 memory = np.arange(2500, 2700)
 # Saccade start time
 saccade = np.arange(3150, 3350)
+# All epochs
+all_epochs = np.arange(1051, 3351)
 
 firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
                     computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
@@ -62,6 +64,10 @@ firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
                     computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, saccade]),
                     computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
+                'All-NoStim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, all_epochs]),
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
                 'Enc-In-Stim': pd.DataFrame([evoked_response(
                     computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, visual]),
                     computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
@@ -73,8 +79,12 @@ firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
                 'Sac-In-Stim': pd.DataFrame([evoked_response(
                     computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, saccade]),
                     computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'All-Stim': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, all_epochs]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose()
-                }
+             }
 
 spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
@@ -88,6 +98,10 @@ spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, saccade]),
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose(),
+                'All-NoStim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, all_epochs]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
                 'Enc-In-Stim': pd.DataFrame([evoked_response_count(
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, visual]),
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
@@ -98,6 +112,10 @@ spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
                       for b in range(len(allNeurons))]).transpose(),
                 'Sac-In-Stim': pd.DataFrame([evoked_response_count(
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, saccade]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'All-Stim': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, all_epochs]),
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
                       for b in range(len(allNeurons))]).transpose()
                 }
