@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import scipy.signal as sig
 
-from dataImport.commons.basicFunctions import normalize
+from commons.tools.basicFunctions import normalize
 
 # =============================================================================
 # A function for selecting rate at different epochs

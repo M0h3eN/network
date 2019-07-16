@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from argparse import ArgumentParser
-from dataImport.commons.basicFunctions import assembleData1, conditionSelect, computeFr, evoked_response,\
+from commons.tools.basicFunctions import assembleData1, conditionSelect, computeFr, evoked_response,\
     computeSpikeCount, evoked_response_count
 from fitModel.pre_processing import raw_neuronal_data_info_compute, split_epoch_condition
 

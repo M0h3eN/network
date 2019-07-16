@@ -1,8 +1,8 @@
 import os
-from dataImport.commons.basicFunctions import assembleData, computerFrAll, createPlotDF,\
+from commons.tools.basicFunctions import assembleData, computerFrAll, createPlotDF,\
  plotFun, saccade_df
 from bokeh.io import export_png
-from dataImport.selectivityMethods.mi import computeMI, plotScat, plotBar, compute_mi_stim_v_nostim, compute_m_index
+from commons.selectivityMethods.mi import computeMI, plotScat, plotBar, compute_mi_stim_v_nostim, compute_m_index
 
 
 dirr = os.fsencode("/home/mohsen/projects/neuroScienceWork/data/")

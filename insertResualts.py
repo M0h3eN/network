@@ -1,6 +1,6 @@
 import os
 from argparse import ArgumentParser
-from fitModel.plot_compare import *
+from commons.plotRelatedFunctions.plot_compare import *
 
 parser = ArgumentParser(description='Save plot for estimated rate detail')
 

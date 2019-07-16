@@ -1,7 +1,7 @@
-from dataImport.selectivityMethods.mi import plotBarGraphCentrality, plotBarGraphCentralityCompare
-from dataImport.commons.basicFunctions import computerFrAll, createPlotDF, plotFun
+from commons.selectivityMethods.mi import plotBarGraphCentrality, plotBarGraphCentralityCompare
+from commons.tools.basicFunctions import computerFrAll, createPlotDF, plotFun
 from pyhawkes.models import DiscreteTimeNetworkHawkesModelSpikeAndSlab
-from fitModel.plot_network import plot_network
+from commons.plotRelatedFunctions.plot_network import plot_network
 from bokeh.io import export_png
 from pymongo import MongoClient
 from networkx.readwrite import json_graph

@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.feature_selection import mutual_info_regression
-from dataImport.commons.basicFunctions import normalize
+from commons.tools.basicFunctions import normalize
 from scipy.stats import pearsonr
 
 # methods are pearsonr and mutual informatin

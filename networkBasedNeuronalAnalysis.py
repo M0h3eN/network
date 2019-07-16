@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from argparse import ArgumentParser
-from dataImport.commons.basicFunctions import assembleData, conditionSelect
+from commons.tools.basicFunctions import assembleData, conditionSelect
 from fitModel.fit_model import fit_model_discrete_time_network_hawkes_spike_and_slab
 from fitModel.pre_processing import raw_neuronal_data_info_compute
 
