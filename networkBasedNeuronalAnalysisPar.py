@@ -6,7 +6,7 @@ import tqdm
 
 from argparse import ArgumentParser
 from commons.tools.basicFunctions import assembleData, conditionSelect, saccade_df
-from commons.selectivityMethods.mi import computeMI
+from commons.selectivityMethods import computeMI
 from fitModel.fit_model_par import fit_model_discrete_time_network_hawkes_spike_and_slab
 from multiprocessing import Pool, cpu_count
 from functools import partial

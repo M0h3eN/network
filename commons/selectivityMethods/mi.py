@@ -1,8 +1,11 @@
-from sklearn.metrics import mutual_info_score
-from commons.tools.basicFunctions import conditionSelect, np, pd, figure, computeSpikeCount
-from scipy.stats import entropy
 import plotly.graph_objs as go
 import plotly.io as pio
+import numpy as np
+import pandas as pd
+
+from sklearn.metrics import mutual_info_score
+from bokeh.plotting import figure
+from commons.tools.basicFunctions import conditionSelect, computeSpikeCount
 
 
 '''

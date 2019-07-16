@@ -5,7 +5,7 @@ import pandas as pd
 from argparse import ArgumentParser
 from commons.tools.basicFunctions import assembleData1, conditionSelect, computeFr, evoked_response,\
     computeSpikeCount, evoked_response_count
-from fitModel.pre_processing import raw_neuronal_data_info_compute, split_epoch_condition
+from fitModel.pre_processing import split_epoch_condition, network_info_writer
 
 
 parser = ArgumentParser(description='This is a Python program for inserting neurons information in mongoDB')
@@ -121,5 +121,6 @@ spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
                 }
 
 split_epoch_condition(firingRate, spikeCounts, args)
-
 print('**** data ingestion completed ****')
+network_info_writer(args, 'Enc-In-Stim.csv', 'pearson')
+print('**** Network information ingestion completed ****')
