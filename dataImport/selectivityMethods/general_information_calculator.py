@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.feature_selection import mutual_info_regression
+from dataImport.commons.basicFunctions import normalize
 from scipy.stats import pearsonr
 
 # methods are pearsonr and mutual informatin
@@ -67,12 +68,20 @@ def set_threshold(data, p_values):
 
     K = data.shape[0]
     thresh_mat = np.empty(data.shape, dtype=float)
+    thresholded_mat = np.empty(data.shape, dtype=float)
 
     for i in range(K):
         for j in range(K):
-            if p_values[i, j] < 0.05:
+            if p_values[i, j] > 0.05:
                 thresh_mat[i, j] = data[i, j]
             else:
                 thresh_mat[i, j] = 0
-    return np.array(thresh_mat, dtype=float)
+    thresh = thresh_mat.flatten().mean(axis=0)
+    for i in range(K):
+        for j in range(K):
+            if data[i, j] > thresh:
+                thresholded_mat[i, j] = data[i, j]
+            else:
+                thresholded_mat[i, j] = 0
+    return np.array(normalize(thresholded_mat.flatten(), 0, 1).reshape(K, K), dtype=float)
 
