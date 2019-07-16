@@ -193,8 +193,8 @@ def computeSpikeCountDict(df, min, max):
     return dtemp
 
 
-def normalize(DF):
-    return (DF - np.min(DF)) / (np.max(DF) - np.min(DF))
+def normalize(vec, a, b):
+    return (((vec - np.min(vec)) * (b-a)) / (np.max(vec) - np.min(vec))) + a
 
 
 # select different conditions
