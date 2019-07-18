@@ -6,7 +6,7 @@ import tqdm
 
 from argparse import ArgumentParser
 from commons.tools.basicFunctions import assembleData, conditionSelect, saccade_df
-from commons.selectivityMethods import computeMI
+from commons.selectivityMethods.mi import computeMI
 from fitModel.fit_model_par import fit_model_discrete_time_network_hawkes_spike_and_slab
 from multiprocessing import Pool, cpu_count
 from functools import partial
@@ -16,18 +16,16 @@ pio.orca.reset_status()
 pio.orca.ensure_server()
 time.sleep(10)
 
-
 parser = ArgumentParser(description='This is a Python program for analysis on network of neurons to '
                                     'detect functional connectivity between neurons')
 
-
-parser.add_argument('-d', '--data',  action='store',
+parser.add_argument('-d', '--data', action='store',
                     dest='data', help='Raw data directory')
 
 parser.add_argument('-H', '--host', action='store',
                     dest='host', help='MongoDB host name')
 
-parser.add_argument('-p', '--port',action='store',
+parser.add_argument('-p', '--port', action='store',
                     dest='port', help='MongoDB port number')
 
 parser.add_argument('-w', '--write', action='store',
@@ -52,12 +50,9 @@ parser.add_argument('-c', '--chain', action='store',
 parser.add_argument('-v', '--version', action='version',
                     dest='', version='%(prog)s 0.1')
 
-
 args = parser.parse_args()
 
-
 # parallel computing config
-
 pool = Pool(cpu_count())
 
 # prepare data
@@ -73,17 +68,17 @@ np.sort(np.array([sum(allNeurons[x].iloc[:, 0:(minTime - 9)].sum()) for x in ran
 # slicing time to decompose Enc, Memory and saccade times
 
 neuronalData = {'Enc-In-NoStim': np.array([conditionSelect(allNeurons[b], 'inNoStim').iloc[:, 1050:1250].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
+                                           for b in range(len(allNeurons))]).transpose(),
                 'Mem-In-NoStim': np.array([conditionSelect(allNeurons[b], 'inNoStim').iloc[:, 2500:2700].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
+                                           for b in range(len(allNeurons))]).transpose(),
                 'Sac-In-NoStim': np.array([conditionSelect(allNeurons[b], 'inNoStim').iloc[:, 3150:3350].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
+                                           for b in range(len(allNeurons))]).transpose(),
                 'Enc-In-Stim': np.array([conditionSelect(allNeurons[b], 'inStim').iloc[:, 1050:1250].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
+                                         for b in range(len(allNeurons))]).transpose(),
                 'Mem-In-Stim': np.array([conditionSelect(allNeurons[b], 'inStim').iloc[:, 2500:2700].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose(),
+                                         for b in range(len(allNeurons))]).transpose(),
                 'Sac-In-Stim': np.array([conditionSelect(allNeurons[b], 'inStim').iloc[:, 3150:3350].sum(axis=0)
-                      for b in range(len(allNeurons))]).transpose()
+                                         for b in range(len(allNeurons))]).transpose()
                 # 'Enc-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 1050:1250].sum(axis=0)
                 #       for b in range(len(allNeurons))]).transpose(),
                 # 'Mem-Out-NoStim': np.array([conditionSelect(allNeurons[b], 'OutNoStim').iloc[:, 2500:2700].sum(axis=0)
@@ -121,13 +116,9 @@ tempPath = writePath
 
 # create fit_par partial function
 fit_par = partial(fit_model_discrete_time_network_hawkes_spike_and_slab,
-                      *[args.lag, network_hypers, args.iter, period, data, allNeurons,
-                        tempPath, args, mivalues, args.chain])
-
+                  *[args.lag, network_hypers, args.iter, period, data, allNeurons,
+                    tempPath, args, mivalues, args.chain])
 
 list(tqdm.tqdm(pool.imap(fit_par, list(range(len(period)))), total=len(period)))
 
 pio.orca.shutdown_server()
-
-
-
