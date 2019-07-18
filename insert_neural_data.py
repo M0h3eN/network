@@ -1,7 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
+import tqdm
 
+from functools import partial
+from multiprocessing import Pool, cpu_count
 from argparse import ArgumentParser
 from commons.tools.basicFunctions import assembleData1, conditionSelect, computeFr, evoked_response,\
     computeSpikeCount, evoked_response_count
@@ -23,6 +26,9 @@ parser.add_argument('-p', '--port',action='store',
                     dest='port', help='MongoDB port number')
 
 args = parser.parse_args()
+
+# parallel computing config
+pool = Pool(cpu_count())
 
 # read all neurons
 dirr = os.fsencode(args.data)
@@ -122,5 +128,20 @@ spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
 
 split_epoch_condition(firingRate, spikeCounts, args)
 print('**** data ingestion completed ****')
-network_info_writer(args, 'Enc-In-Stim.csv', 'pearson')
-print('**** Network information ingestion completed ****')
+
+# create a list of all networks
+file_names = os.listdir(args.write + 'Firing Rate/')
+
+# create fit_par partial function
+pearson_par = partial(network_info_writer, *[args, 'pearson'])
+mutual_par = partial(network_info_writer, *[args, 'mutual'])
+
+# pearson
+list(tqdm.tqdm(pool.imap(pearson_par, list(range(len(file_names)))), total=len(file_names)))
+print('**** Network information(pearson correlation) ingestion completed ****')
+
+# mutual information
+list(tqdm.tqdm(pool.imap(mutual_par, list(range(len(file_names)))), total=len(file_names)))
+print('**** Network information(mutual information) ingestion completed ****')
+
+
