@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import networkx as nx
+import commons.tools.graph_processing as gp
 
 from bokeh.io import export_png
 from pymongo import MongoClient
@@ -10,6 +11,7 @@ from commons.tools.basicFunctions import (computerFrAll, computerFrAllDict, comp
 from commons.selectivityMethods.mi import computeMI, plotScat, plotBar
 from commons.plotRelatedFunctions.FiringRateRelatedPlotFunctions import createPlotDF, plotFun
 from commons.selectivityMethods.general_information_calculator import info, set_threshold
+
 
 
 def raw_neuronal_data_info_compute(data, args):
@@ -94,13 +96,9 @@ def network_info_writer(args, method, filename):
 
     readPath = args.write + 'Firing Rate/'
     writePath = args.write + 'NetworkInformations/'
-    graphPah = args.write + 'Graphs/'
 
     if not os.path.exists(writePath):
         os.makedirs(writePath)
-
-    if not os.path.exists(graphPah):
-        os.makedirs(graphPah)
 
     data = pd.read_csv(readPath + filename)
     # Read correlation, mutual information and correlation p_values
@@ -130,7 +128,7 @@ def network_info_writer(args, method, filename):
     G = nx.from_numpy_matrix(thresh_network)
     G = nx.relabel_nodes(G, labels, copy=False)
     # Write graphs
-    nx.write_gml(G, graphPah + filename + ".gml")
+    nx.write_gml(G, infoPath + filename + ".gml")
     # graph infos
     # Average shortest path
     asp = nx.average_shortest_path_length(G)
@@ -138,10 +136,9 @@ def network_info_writer(args, method, filename):
     co = nx.average_clustering(G)
     # smallworldness index 1-Omega: values near zero indicates small world property,
     # values near -1 indicate lattice shape, value near to 1 indicate random graph
-    omega = nx.algorithms.omega(G)
     # smallworldness index 2-Sigma: values greater than 1 indicate small world value property,
     # specifically when its greater or equal than 3
-    sigma = nx.algorithms.sigma(G)
+    sigma, omega = gp.small_world_index(G, niter=100, nrand=100)
     # density
     dens = nx.density(G)
     # degree distribution

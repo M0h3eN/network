@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import time
 import tqdm
 
 from functools import partial
@@ -89,7 +90,31 @@ firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
                 'All-Stim': pd.DataFrame([evoked_response(
                     computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, all_epochs]),
                     computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
-                      for b in range(len(allNeurons))]).transpose()
+                      for b in range(len(allNeurons))]).transpose(),
+                'Enc-diff': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, visual]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Mem-diff': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, memory]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Sac-diff': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, saccade]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, saccade]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'All-diff': pd.DataFrame([evoked_response(
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, all_epochs]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, all_epochs]),
+                    computeFr(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
              }
 
 spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
@@ -123,7 +148,31 @@ spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
                 'All-Stim': pd.DataFrame([evoked_response_count(
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, all_epochs]),
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]))
-                      for b in range(len(allNeurons))]).transpose()
+                      for b in range(len(allNeurons))]).transpose(),
+                'Enc-diff': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, visual]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Mem-diff': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, memory]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'Sac-diff': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, saccade]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, saccade]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
+                'All-diff': pd.DataFrame([evoked_response_count(
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, all_epochs]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, all_epochs]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStim').iloc[:, base_line]) -
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line]))
+                      for b in range(len(allNeurons))]).transpose(),
                 }
 
 split_epoch_condition(firingRate, spikeCounts, args)
@@ -137,11 +186,15 @@ pearson_par = partial(network_info_writer, *[args, 'pearson'])
 mutual_par = partial(network_info_writer, *[args, 'mutual'])
 
 # pearson
-list(tqdm.tqdm(pool.imap(pearson_par, list(range(len(file_names)))), total=len(file_names)))
-print('**** Network information(pearson correlation) ingestion completed ****')
+start_time = time.time()
+list(map(pearson_par, file_names))
+print('**** Network information(pearson correlation) ingestion completed in'
+      + " %s seconds " % (time.time() - start_time) + ' ****')
 
 # mutual information
-list(tqdm.tqdm(pool.imap(mutual_par, list(range(len(file_names)))), total=len(file_names)))
-print('**** Network information(mutual information) ingestion completed ****')
+start_time = time.time()
+list(map(mutual_par, file_names))
+print('**** Network information(mutual information) ingestion completed in' +
+      " %s seconds " % (time.time() - start_time) + ' ****')
 
 
