@@ -94,9 +94,13 @@ def network_info_writer(args, filename, method):
 
     readPath = args.write + 'Firing Rate/'
     writePath = args.write + 'NetworkInformations/'
+    graphPah = args.write + 'Graphs/'
 
     if not os.path.exists(writePath):
         os.makedirs(writePath)
+
+    if not os.path.exists(graphPah):
+        os.makedirs(graphPah)
 
     data = pd.read_csv(readPath + filename)
     # Read correlation, mutual information and correlation p_values
@@ -125,6 +129,8 @@ def network_info_writer(args, filename, method):
     labels = dict(zip(np.arange(0, len(labels)), labels))
     G = nx.from_numpy_matrix(thresh_network)
     G = nx.relabel_nodes(G, labels, copy=False)
+    # Write graphs
+    nx.write_gml(G, graphPah + filename + ".gml")
     # graph infos
     # Average shortest path
     asp = nx.average_shortest_path_length(G)
@@ -171,6 +177,9 @@ def network_info_writer(args, filename, method):
     centrality_data_frame.sort_values(['indexNumber'], ascending=True, inplace=True)
     centrality_data_frame.drop('indexNumber', 1, inplace=True)
     centrality_data_frame.to_csv(infoPath + filename, index=False)
+
+
+
 
 
 
