@@ -3,6 +3,9 @@ import os
 import numpy as np
 import pandas as pd
 import scipy.io as sio
+import networkx as nx
+
+from networkx import random_reference, lattice_reference
 
 
 # Columns name
@@ -360,3 +363,12 @@ def computeSpikeCountALLDict(neurons_df):
 
 
 
+# Graph processing functions
+def rand_iterator(G, niter, seed, i):
+    randMetrics = {}
+    Gr = random_reference(G, niter=niter, seed=seed)
+    Gl = lattice_reference(G, niter=niter, seed=seed)
+    randMetrics["C"] = nx.transitivity(Gr)
+    randMetrics["Co"] = nx.transitivity(Gl)
+    randMetrics["L"] = nx.average_shortest_path_length(Gr)
+    return randMetrics
