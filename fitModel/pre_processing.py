@@ -90,7 +90,7 @@ def split_epoch_condition(data_fr, data_sc, args):
         spike_count.to_csv(index=False, path_or_buf=scountPath + period_sc[per] + '.csv')
 
 
-def network_info_writer(args, filename, method):
+def network_info_writer(args, method, filename):
 
     readPath = args.write + 'Firing Rate/'
     writePath = args.write + 'NetworkInformations/'
