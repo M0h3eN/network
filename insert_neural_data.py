@@ -2,7 +2,6 @@ import os
 import numpy as np
 import pandas as pd
 import time
-import tqdm
 
 from functools import partial
 from multiprocessing import Pool, cpu_count
