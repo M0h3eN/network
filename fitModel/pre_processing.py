@@ -119,7 +119,7 @@ def network_info_writer(args, method, filename):
         if not os.path.exists(infoPath):
             os.makedirs(infoPath)
 
-        network, p_values = info(data=data, method='pearson')
+        network, p_values = info(data=data, method='mutual')
         # Set threshold in connectivity matrix based on average p_values
         thresh_network = set_threshold(network, p_values)
 
@@ -138,7 +138,7 @@ def network_info_writer(args, method, filename):
     # values near -1 indicate lattice shape, value near to 1 indicate random graph
     # smallworldness index 2-Sigma: values greater than 1 indicate small world value property,
     # specifically when its greater or equal than 3
-    sigma, omega = gp.small_world_index(G, niter=100, nrand=8)
+    sigma, omega = gp.small_world_index(G, niter=100, nrand=100)
     # density
     dens = nx.density(G)
     # degree distribution

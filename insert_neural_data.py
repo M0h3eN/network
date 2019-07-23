@@ -22,7 +22,7 @@ parser.add_argument('-w', '--write', action='store',
 parser.add_argument('-H', '--host', action='store',
                     dest='host', help='MongoDB host name')
 
-parser.add_argument('-p', '--port',action='store',
+parser.add_argument('-p', '--port', action='store',
                     dest='port', help='MongoDB port number')
 
 args = parser.parse_args()
