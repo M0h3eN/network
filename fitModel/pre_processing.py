@@ -173,7 +173,11 @@ def network_info_writer(args, method, filename):
     centrality_data_frame['neuron'] = centrality_data_frame.index
     centrality_data_frame.sort_values(['indexNumber'], ascending=True, inplace=True)
     centrality_data_frame.drop('indexNumber', 1, inplace=True)
+    # Writing network info data
     centrality_data_frame.to_csv(infoPath + filename, index=False)
+    # Writing Raw data
+    pd.DataFrame(network, columns=labels).to_csv(infoPath + 'Raw-' + filename, index=False)
+    pd.DataFrame(thresh_network, columns=labels).to_csv(infoPath + 'thresh-' + filename, index=False)
 
 
 
