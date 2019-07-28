@@ -155,13 +155,13 @@ def computeFr(df):
 
 
 def evoked_response(df, base_line):
-    evoked = (df - min(base_line)) / (max(df) - min(base_line))
+    evoked = (df - np.mean(base_line))
     return evoked
 
 
 def evoked_response_count(df, base_line):
     evoked = np.ceil((df - np.mean(base_line)))
-    return evoked
+    return set_neg_to_zero(evoked)
 
 
 def computeSpikeCount(df, min, max):
@@ -362,7 +362,6 @@ def computeSpikeCountALLDict(neurons_df):
     return sep_by_cond
 
 
-
 # Graph processing functions
 def rand_iterator(G, niter, seed, i):
     randMetrics = {}
@@ -372,3 +371,18 @@ def rand_iterator(G, niter, seed, i):
     randMetrics["Co"] = nx.transitivity(Gl)
     randMetrics["L"] = nx.average_shortest_path_length(Gr)
     return randMetrics
+
+
+def set_neg_to_zero(data):
+    data_positive = np.array(data)
+    dim = data_positive.shape
+    if len(dim) > 1:
+        for i in range(dim[0]):
+            for j in range(dim[1]):
+                if data_positive[i, j] < 0:
+                    data_positive[i, j] = 0
+    else:
+        for i in range(dim[0]):
+            if data_positive[i] < 0:
+                data_positive[i] = 0
+    return data_positive
