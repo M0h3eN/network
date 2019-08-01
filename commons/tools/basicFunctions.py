@@ -15,15 +15,30 @@ def generatorTemp(size):
         yield 'T' + str(ii)
 
 
+def _tolist(ndarray):
+    '''
+       A recursive function which constructs lists from cellarrays
+       (which are loaded as numpy ndarrays), recursing into the elements
+       if they contain matobjects.
+   '''
+    elem_list = []
+    for sub_elem in ndarray:
+        if isinstance(sub_elem, np.ndarray):
+            elem_list.append(_tolist(sub_elem))
+        else:
+            elem_list.append(sub_elem)
+    return elem_list
+
 # generate eye data
-
-def generateEyeDF(eye):
+def generateEyeDF(eye, ed):
     tempList = {}
-
-    for i in np.arange(4):
+    for i in np.arange(6):
         tempList[i] = pd.DataFrame(data=eye[0][0][0][0][i])
+    eye_data_df = pd.DataFrame(_tolist(ed[0][0][0]))
     tdf = pd.DataFrame(data=pd.concat([tempList[0], tempList[1],
-                                       tempList[2], tempList[3]], axis=1))
+                                       tempList[2], tempList[3],
+                                       tempList[4], tempList[5],
+                                       eye_data_df], axis=1))
     colsName = [
         'SacStartTime',
         'SacStopTime',
@@ -31,6 +46,10 @@ def generateEyeDF(eye):
         'SacStartPosY',
         'SacStopPosX',
         'SacStopPosY',
+        'R',
+        'Theta',
+        'X',
+        'Y'
     ]
     tdf.columns = colsName
     return tdf
@@ -71,7 +90,7 @@ def assembleData(directory):
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             allNeurons[iter] = pd.concat([neurons[iter],
-                                                          generateEyeDF(Eye)], axis=1)
+                                                          generateEyeDF(Eye, dictVal['eyeData'])], axis=1)
                             print("Neuron" + str(iter))
                             iter = iter + 1
                         else:
@@ -107,7 +126,7 @@ def assembleData1(directory):
     return neurons
 
 
-def saccade_df(neurons_df):
+def saccade_df(neurons_df, align_point):
     saccade_df = {}
     tmp_list1 = []
     tmp_list2 = []
@@ -116,17 +135,32 @@ def saccade_df(neurons_df):
 
     for numerator in range(len(neurons_df)):
         saccade_time = neurons_df[numerator]['SacStartTime']
-        neurons_df1[numerator] = neurons_df[numerator].iloc[:,
-                                 0:(neurons_df[numerator].columns.get_loc("Cond") - 1)]
+
+        neurons_df1[numerator] = neurons_df[numerator].iloc[:, 0:(neurons_df[numerator].columns.get_loc("Cond") - 1)]
         for i in range(len(saccade_time)):
-            tmp_list1.append(
-                neurons_df1[numerator].iloc[i,
-                (saccade_time[i] - 3000):saccade_time[i]].reset_index(drop=True))
-            tmp_list2.append(
-                neurons_df1[numerator].iloc[i,
-                (saccade_time[i] + 1):(saccade_time[i] + 400)].reset_index(drop=True))
-        saccade_df[numerator] = pd.concat([pd.DataFrame(tmp_list1),
-                                           pd.DataFrame(tmp_list2),
+            pre_col_index = np.arange((saccade_time[i] - align_point), saccade_time[i])
+
+            #Check for end point selection
+            if (2 * saccade_time[i] - align_point) <= (neurons_df[numerator].columns.get_loc("Cond") - 1):
+                end_point = (2*saccade_time[i] - align_point)
+            else:
+                end_point = (neurons_df[numerator].columns.get_loc("Cond") - 1)
+
+            post_col_index = np.arange((saccade_time[i] + 1), end_point)
+
+            series1 = neurons_df1[numerator].iloc[i, pre_col_index].reset_index(drop=True)
+            series2 = neurons_df1[numerator].iloc[i, post_col_index].reset_index(drop=True)
+
+            tmp_list1.append(series1)
+            tmp_list2.append(series2)
+
+        df1 = pd.DataFrame(tmp_list1)
+        df1.columns = list(np.arange(0, df1.shape[1]))
+        df2 = pd.DataFrame(tmp_list2)
+        df2.columns = list(np.arange(df1.shape[1], df1.shape[1] + df2.shape[1]))
+
+        # Fill na with zero
+        saccade_df[numerator] = pd.concat([df1.fillna(0), df2.fillna(0),
                                            neurons_df[numerator].iloc[:,
                                            (neurons_df[numerator].columns.get_loc("Cond")):
                                            (neurons_df[numerator].columns.get_loc("SacStopPosY"))]], axis=1)
