@@ -14,13 +14,13 @@ from bokeh.plotting import figure
 """
 
 
-def createPlotDF(DF, DF2, period, ind):
+def createPlotDF(DF, period, ind):
     if period == 'sac':
-        inStim = sig.savgol_filter(DF[ind][0], 415, 3)
-        x = np.linspace(0, 3400, len(inStim)) - 3000
-        inNoStim = sig.savgol_filter(DF[ind][2], 415, 3)
-        outStim = sig.savgol_filter(DF[ind][1], 415, 3)
-        outNoStim = sig.savgol_filter(DF[ind][3], 415, 3)
+        inStim = sig.savgol_filter(DF[ind][0], 315, 3)
+        x = np.linspace(0, 3700, len(inStim)) - 3000
+        inNoStim = sig.savgol_filter(DF[ind][2], 315, 3)
+        outStim = sig.savgol_filter(DF[ind][1], 315, 3)
+        outNoStim = sig.savgol_filter(DF[ind][3], 315, 3)
         df = pd.DataFrame(data=dict(x=x,
                                     inStim=inStim,
                                     inNoStim=inNoStim,

@@ -1,9 +1,7 @@
-from commons.selectivityMethods import computeMI, plotBarGraphCentrality, plotBarGraphCentralityCompare
-from commons.tools.basicFunctions import saccade_df, computerFrAll
-from commons.plotRelatedFunctions import createPlotDF, plotFun
+from commons.selectivityMethods.mi import computeMI, plotBarGraphCentrality, plotBarGraphCentralityCompare
+from commons.tools.basicFunctions import saccade_df
 from pyhawkes.models import DiscreteTimeNetworkHawkesModelSpikeAndSlab
-from commons.plotRelatedFunctions import plot_network
-from bokeh.io import export_png
+from commons.plotRelatedFunctions.plot_network import plot_network
 from pymongo import MongoClient
 from networkx.readwrite import json_graph
 import os
@@ -51,6 +49,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
             writePath = tempPath + '/' + 'Plots' '/' + period[per] + '/'
             graphPah = tempPath + '/' + 'Network' + '/'
             ratePath = tempPath + '/' + 'EstimatedRate' + '/'
+            MCMCPath = tempPath + '/' + 'MCMCValues' + '/'
 
             if not (os.path.exists(writePath)):
                 os.makedirs(writePath)
@@ -60,6 +59,9 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
 
             if not (os.path.exists(ratePath)):
                 os.makedirs(ratePath)
+
+            if not (os.path.exists(MCMCPath)):
+                os.makedirs(MCMCPath)
 
             print('State:', '**** ', period[per], 'CHAIN: ', str(chain), ' ****')
 
@@ -135,6 +137,14 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
             ImpulseG_sample = np.array([np.reshape(s.impulse_model.g, (k,k,s.impulse_model.B)) for s in samples])
             Rate_samples = np.array([s.compute_rate(S=data[per]) for s in samples])
 
+            # Save Raw values
+            np.save(MCMCPath + period[per] + '_A_samples_Raw', A_samples)
+            np.save(MCMCPath + period[per] + '_W_samples_Raw', W_samples)
+            np.save(MCMCPath + period[per] + '_W_effective_sample_Raw', W_effective_sample)
+            np.save(MCMCPath + period[per] + '_LambdaZero_sample_Raw', LambdaZero_sample)
+            np.save(MCMCPath + period[per] + '_ImpulseG_sample_Raw', ImpulseG_sample)
+            np.save(MCMCPath + period[per] + '_ImpulseG_sample_Raw', ImpulseG_sample)
+
             # DIC evaluation
 
             # theta_bar evaluation
@@ -196,17 +206,9 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
 
             fv = plot_network(G, writePath + 'Network')
 
-            plotBarGraphCentrality(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformation')
-            plotBarGraphCentralityCompare(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformationCompare')
-
-            # PSTH
-
-            visualAndDelay = computerFrAll(completeData, 'vis')
-            saccade = computerFrAll(completeData, 'saccade')
-
-            export_png(plotFun(createPlotDF(DF=visualAndDelay, DF2=completeData[0], period='vis', ind=fv),
-                               createPlotDF(DF=saccade, DF2=completeData[fv], period='sac', ind=fv)),
-                       filename=writePath + 'FiringRate' + '.png')
+            if "diff" not in period[per]:
+                plotBarGraphCentrality(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformation')
+                plotBarGraphCentralityCompare(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformationCompare')
 
 
 

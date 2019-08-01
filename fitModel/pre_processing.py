@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import numpy as np
 import networkx as nx
-import commons.tools.graph_processing as gp
 
 from bokeh.io import export_png
 from pymongo import MongoClient
@@ -40,8 +39,8 @@ def raw_neuronal_data_info_compute(data, args):
 
     # saving PSTHs charts
     for iterator in range(len(saccade)):
-        export_png(plotFun(createPlotDF(DF=visualAndDelay, DF2=data[0], period='vis', ind=iterator),
-                           createPlotDF(DF=saccade, DF2=data[iterator], period='sac', ind=iterator)),
+        export_png(plotFun(createPlotDF(DF=visualAndDelay, period='vis', ind=iterator),
+                           createPlotDF(DF=saccade, period='sac', ind=iterator)),
                    filename=writePathFr + str(iterator) + '.png')
 
     # inserting Spike Counts

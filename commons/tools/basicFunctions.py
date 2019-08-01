@@ -409,10 +409,10 @@ def set_neg_to_zero(data):
     if len(dim) > 1:
         for i in range(dim[0]):
             for j in range(dim[1]):
-                if data_positive[i, j] < 0:
+                if data_positive[i, j] <= 0:
                     data_positive[i, j] = 0
     else:
         for i in range(dim[0]):
-            if data_positive[i] < 0:
+            if data_positive[i] <= 0:
                 data_positive[i] = 0
     return data_positive

@@ -140,7 +140,7 @@ period, data = zip(*neuronalData.items())
 
 # Compute the mutual information
 
-saccade_data_set = saccade_df(allNeurons)
+saccade_data_set = saccad_df
 mivalues = dict(Stim=computeMI(allNeurons, saccade_data_set, 'Stim'),
                 NoStim=computeMI(allNeurons, saccade_data_set, 'NoStim'))
 

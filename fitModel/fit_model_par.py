@@ -1,8 +1,6 @@
-from commons.selectivityMethods import plotBarGraphCentrality, plotBarGraphCentralityCompare
-from commons.tools.basicFunctions import computerFrAll, createPlotDF, plotFun
+from commons.selectivityMethods.mi import plotBarGraphCentrality, plotBarGraphCentralityCompare
 from pyhawkes.models import DiscreteTimeNetworkHawkesModelSpikeAndSlab
-from commons.plotRelatedFunctions import plot_network
-from bokeh.io import export_png
+from commons.plotRelatedFunctions.plot_network import plot_network
 from pymongo import MongoClient
 from networkx.readwrite import json_graph
 
@@ -179,13 +177,5 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(dtmax, hypers, itter, 
     plotBarGraphCentrality(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformation')
     plotBarGraphCentralityCompare(mivalues[period[per].split("-")[2]], fv, writePath + 'MutualInformationCompare')
 
-    # PSTH
-
-    visualAndDelay = computerFrAll(completeData, 'vis')
-    saccade = computerFrAll(completeData, 'saccade')
-
-    export_png(plotFun(createPlotDF(DF=visualAndDelay, DF2=completeData[0], period='vis', ind=fv),
-                       createPlotDF(DF=saccade, DF2=completeData[fv], period='sac', ind=fv)),
-               filename=writePath + 'FiringRate' + '.png')
 
 
