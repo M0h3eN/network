@@ -126,7 +126,7 @@ def assembleData1(directory):
     return neurons
 
 
-def saccade_df(neurons_df, align_point):
+def saccade_df(neurons_df, align_point=3000):
     saccade_df = {}
     tmp_list1 = []
     tmp_list2 = []
@@ -176,17 +176,14 @@ def sacTime(df):
 
 # Compute firing rate
 
-def computeFr(df, min, max):
-    dtemp = np.mean(df.iloc[:, min:max]) * 1000
+def computeFr(df, minimum=None, maximum=None):
+    if minimum is not None and maximum is not None:
+        dtemp = np.mean(df.iloc[:, minimum:maximum]) * 1000
+    else:
+        minimum = 0
+        maximum = df.shape[1]
+        dtemp = np.mean(df.iloc[:, minimum:maximum]) * 1000
     return dtemp
-
-
-def computeFr(df):
-    min = 0
-    max = df.shape[1]
-    dtemp = np.mean(df.iloc[:, min:max]) * 1000
-    return dtemp
-
 
 def evoked_response(df, base_line):
     evoked = (df - np.mean(base_line))
@@ -198,16 +195,15 @@ def evoked_response_count(df, base_line):
     return set_neg_to_zero(evoked)
 
 
-def computeSpikeCount(df, min, max):
-    dtemp = np.sum(df.iloc[:, min:max])
+def computeSpikeCount(df, minimum=None, maximum=None):
+    if minimum is not None and maximum is not None:
+        dtemp = np.sum(df.iloc[:, minimum:maximum])
+    else:
+        minimum = 0
+        maximum = df.shape[1]
+        dtemp = np.sum(df.iloc[:, minimum:maximum])
     return dtemp
 
-
-def computeSpikeCount(df):
-    min = 0
-    max = df.shape[1]
-    dtemp = np.sum(df.iloc[:, min:max])
-    return dtemp
 
 
 def computeFrDict(df, min, max):
