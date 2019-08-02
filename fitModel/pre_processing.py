@@ -10,6 +10,7 @@ from commons.tools.basicFunctions import (computerFrAll, computerFrAllDict, comp
 from commons.selectivityMethods.mi import computeMI, plotScat, plotBar
 from commons.plotRelatedFunctions.FiringRateRelatedPlotFunctions import createPlotDF, plotFun
 from commons.selectivityMethods.general_information_calculator import info, set_threshold
+from commons.tools import graph_processing as gp
 
 
 
@@ -91,15 +92,25 @@ def split_epoch_condition(data_fr, data_sc, args):
         spike_count.to_csv(index=False, path_or_buf=scountPath + period_sc[per] + '.csv')
 
 
-def network_info_writer(args, method, filename):
+def network_info_writer(args, referencePath, quant, method, filename):
 
-    readPath = args.write + 'Firing Rate/'
+    global infoPath, thresh_network, network
+    readPath = args.write + 'Spike Count/'
     writePath = args.write + 'NetworkInformations/'
 
     if not os.path.exists(writePath):
         os.makedirs(writePath)
 
     data = pd.read_csv(readPath + filename)
+
+    referenceFiles = os.listdir(referencePath)
+    referenceFileName = list(filter(lambda x: (x.startswith(filename.split(".")[0]) & x.endswith("_W_effective_sample_Raw.npy")), referenceFiles))[0]
+    referenceData = np.load(referencePath + referenceFileName)
+    referenceDataShape = referenceData.shape[0]
+    # select data after burn-in and the quantf as estimated values
+    referenceDataQuantiled = np.quantile(referenceData[referenceDataShape//2:, :, :], quant, axis=0)
+
+
     # Read correlation, mutual information and correlation p_values
     if method == 'pearson':
 
@@ -108,19 +119,40 @@ def network_info_writer(args, method, filename):
         if not os.path.exists(infoPath):
             os.makedirs(infoPath)
 
-        network, p_values = info(data=data, method='pearson')
+        network = info(data=data, method='pearson')
         # Set threshold in connectivity matrix based on average p_values
-        thresh_network = set_threshold(network, p_values)
+        thresh_network = set_threshold(network, referenceDataQuantiled)
 
     elif method == 'mutual':
+
         infoPath = writePath + 'MutualInformation/'
 
         if not os.path.exists(infoPath):
             os.makedirs(infoPath)
 
-        network, p_values = info(data=data, method='mutual')
+        network = info(data=data, method='mutual')
         # Set threshold in connectivity matrix based on average p_values
-        thresh_network = set_threshold(network, p_values)
+        thresh_network = set_threshold(network, referenceDataQuantiled)
+
+    elif method == 'mutualScore':
+        infoPath = writePath + 'MutualInformation/'
+
+        if not os.path.exists(infoPath):
+            os.makedirs(infoPath)
+
+        network = info(data=data, method='mutualScore')
+        # Set threshold in connectivity matrix based on average p_values
+        thresh_network = set_threshold(network, referenceDataQuantiled)
+
+    elif method == 'hawkes':
+        infoPath = writePath + 'Hawkes/'
+
+        if not os.path.exists(infoPath):
+            os.makedirs(infoPath)
+
+        network = referenceDataQuantiled
+        # Set threshold in connectivity matrix based on average p_values
+        thresh_network = set_threshold(network, referenceDataQuantiled)
 
     labels = list(map(lambda x: 'N' + str(x + 1), range(thresh_network.shape[1])))
     labels = dict(zip(np.arange(0, len(labels)), labels))
@@ -130,14 +162,17 @@ def network_info_writer(args, method, filename):
     nx.write_gml(G, infoPath + str(filename).split('.')[0] + ".gml")
     # graph infos
     # Average shortest path
-    asp = nx.average_shortest_path_length(G)
+    if nx.is_connected(G):
+        asp = nx.average_shortest_path_length(G)
+    else:
+        asp = np.mean([nx.average_shortest_path_length(g) for g in nx.connected_component_subgraphs(G)])
     # Clustering coefficient
     co = nx.average_clustering(G)
     # smallworldness index 1-Omega: values near zero indicates small world property,
     # values near -1 indicate lattice shape, value near to 1 indicate random graph
     # smallworldness index 2-Sigma: values greater than 1 indicate small world value property,
     # specifically when its greater or equal than 3
-    sigma, omega = [0,5]#gp.small_world_index(G, niter=10, nrand=4)
+    sigma, omega = gp.small_world_index(G, niter=50, nrand=10)
     # density
     dens = nx.density(G)
     # degree distribution
@@ -153,17 +188,10 @@ def network_info_writer(args, method, filename):
     harmon = dict(zip(extract_from_dict(harmon)[0], normalize(extract_from_dict(harmon)[1], 0, 1)))
     loads = nx.centrality.load_centrality(G)
     loads = dict(zip(extract_from_dict(loads)[0], normalize(extract_from_dict(loads)[1], 0, 1)))
-    infoc = nx.centrality.information_centrality(G)
-    infoc = dict(zip(extract_from_dict(infoc)[0], normalize(extract_from_dict(infoc)[1], 0, 1)))
-    cf_between = nx.centrality.current_flow_betweenness_centrality(G)
-    cf_between = dict(zip(extract_from_dict(cf_between)[0], normalize(extract_from_dict(cf_between)[1], 0, 1)))
-    cf_close = nx.centrality.current_flow_closeness_centrality(G)
-    cf_close = dict(zip(extract_from_dict(cf_close)[0], normalize(extract_from_dict(cf_close)[1], 0, 1)))
+
     graph_centrality_measures = {'closeness_centrality': close, 'eigenvector_centrality': eigen,
                                  'betweenness_centrality': between, 'harmonic_centrality': harmon,
-                                 'load_centrality': loads, 'information_centrality': infoc,
-                                 'current_flow_betweenness_centrality': cf_between,
-                                 'current_flow_closeness_centrality': cf_close, 'degrees': degrees,
+                                 'load_centrality': loads, 'degrees': degrees,
                                  'average_shortest_path': asp, 'average_clustering': co,
                                  'omega': omega, 'sigma': sigma, 'density': dens}
     centrality_data_frame = pd.DataFrame.from_dict(graph_centrality_measures)
