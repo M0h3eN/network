@@ -1,9 +1,13 @@
 import numpy as np
 from sklearn.feature_selection import mutual_info_regression
+from sklearn.metrics import mutual_info_score
 from commons.tools.basicFunctions import normalize
 from scipy.stats import pearsonr
 
-# methods are pearsonr and mutual informatin
+# methods are:
+# 1- pearsonr
+# 2- mutual information (continuous) ---- mutual
+# 3- mutual information score (discreet) --- mutualScore
 
 
 def info(data, method='pearson'):
@@ -14,20 +18,6 @@ def info(data, method='pearson'):
     mat = numeric_df.values.T
     K = len(cols)
     correl = np.empty((K, K), dtype=float)
-    p_values = np.empty((K, K), dtype=float)
-
-    # Compute p_values based on correlation
-
-    for i, ac in enumerate(mat):
-        for j, bc in enumerate(mat):
-            if i > j:
-                continue
-            elif i == j:
-                p = 0.
-            else:
-                p = pearsonr(ac, bc)[1]
-            p_values[i, j] = p
-            p_values[j, i] = p
 
     if method == 'pearson':
         corrf = np.corrcoef
@@ -54,34 +44,39 @@ def info(data, method='pearson'):
                 correl[i, j] = c
                 correl[j, i] = c
 
+    elif method == 'mutualScore':
+        corrf = mutual_info_score
+        for i in range(K):
+            for j in range(K):
+                if i > j:
+                    continue
+                elif i == j:
+                    c = 1.
+                else:
+                    c = corrf(mat[i, :], mat[j, :])
+                correl[i, j] = c
+                correl[j, i] = c
+
     else:
         raise ValueError("method must be either 'pearson', "
-                         "'spearman', or 'kendall', '{method}' "
+                         "'mutual', or 'mutualScore', '{method}' "
                          "was supplied".format(method=method))
 
-    return [np.array(correl, dtype=float), np.array(p_values, dtype=float)]
+    return np.array(correl, dtype=float)
 
 
 # set threshold based on p_value matrix
 
-def set_threshold(data, p_values):
+def set_threshold(data, reference):
 
     K = data.shape[0]
-    thresh_mat = np.empty(data.shape, dtype=float)
     thresholded_mat = np.empty(data.shape, dtype=float)
 
     for i in range(K):
         for j in range(K):
-            if p_values[i, j] > 0.05:
-                thresh_mat[i, j] = data[i, j]
-            else:
-                thresh_mat[i, j] = 0
-    thresh = thresh_mat.flatten().mean(axis=0)
-    for i in range(K):
-        for j in range(K):
-            if data[i, j] > thresh:
+            if reference[i, j] > 0:
                 thresholded_mat[i, j] = data[i, j]
             else:
                 thresholded_mat[i, j] = 0
-    return np.array(normalize(thresholded_mat.flatten(), 0, 1).reshape(K, K), dtype=float)
+    return thresholded_mat
 
