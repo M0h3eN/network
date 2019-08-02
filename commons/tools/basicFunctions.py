@@ -399,7 +399,10 @@ def rand_iterator(G, niter, seed, i):
     Gl = lattice_reference(G, niter=niter, seed=seed)
     randMetrics["C"] = nx.transitivity(Gr)
     randMetrics["Co"] = nx.transitivity(Gl)
-    randMetrics["L"] = nx.average_shortest_path_length(Gr)
+    if nx.is_connected(Gr):
+        randMetrics["L"] = nx.average_shortest_path_length(Gr)
+    else:
+        randMetrics["L"] = np.mean([nx.average_shortest_path_length(g) for g in nx.connected_component_subgraphs(Gr)])
     return randMetrics
 
 
