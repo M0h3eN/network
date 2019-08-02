@@ -66,7 +66,10 @@ def small_world_index(G, niter=100, nrand=10, seed=None):
     randMetrics = pd.DataFrame.from_dict(randMetrics)
 
     C = nx.transitivity(G)
-    L = nx.average_shortest_path_length(G)
+    if nx.is_connected(G):
+        L = nx.average_shortest_path_length(G)
+    else:
+        L = np.mean([nx.average_shortest_path_length(g) for g in nx.connected_component_subgraphs(G)])
     Cr = np.mean(randMetrics["C"])
     Cl = np.mean(randMetrics["Co"])
     Lr = np.mean(randMetrics["L"])
