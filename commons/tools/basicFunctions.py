@@ -416,3 +416,11 @@ def set_neg_to_zero(data):
             if data_positive[i] <= 0:
                 data_positive[i] = 0
     return data_positive
+
+
+def fill_dict(dicts, totalValues):
+    modified_dict = dicts
+    diffs = list(set(totalValues) - set(dicts.keys()))
+    for x in diffs:
+        modified_dict[x] = 0
+    return modified_dict
