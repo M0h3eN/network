@@ -149,21 +149,29 @@ print('**** data ingestion completed ****')
 
 # create a list of all networks
 file_names = os.listdir(args.write + 'Firing Rate/')
+referencePath = args.write + '/Chain1/MCMCValues/'
 
 # create fit_par partial function
-pearson_par = partial(network_info_writer, *[args, 'pearson'])
-mutual_par = partial(network_info_writer, *[args, 'mutual'])
+pearson_par = partial(network_info_writer, *[args, referencePath, 0.6, 'pearson'])
+mutual_par = partial(network_info_writer, *[args, referencePath, 0.6, 'mutual'])
+hawkes_par = partial(network_info_writer, *[args, referencePath, 0.6, 'hawkes'])
 
 # pearson
-# start_time = time.time()
-# list(map(pearson_par, file_names))
-# print('**** Network information(pearson correlation) ingestion completed in'
-#       + " %s seconds " % (time.time() - start_time) + ' ****')
-#
-# # mutual information
-# start_time = time.time()
-# list(map(mutual_par, file_names))
-# print('**** Network information(mutual information) ingestion completed in' +
-#       " %s seconds " % (time.time() - start_time) + ' ****')
+start_time = time.time()
+list(map(pearson_par, file_names))
+print('**** Network information(pearson correlation) ingestion completed in'
+      + " %s seconds " % (time.time() - start_time) + ' ****')
+
+# mutual information
+start_time = time.time()
+list(map(mutual_par, file_names))
+print('**** Network information(mutual information) ingestion completed in' +
+      " %s seconds " % (time.time() - start_time) + ' ****')
+
+# hawkes
+start_time = time.time()
+list(map(hawkes_par, file_names))
+print('**** Network information(hawkes information) ingestion completed in' +
+      " %s seconds " % (time.time() - start_time) + ' ****')
 
 
