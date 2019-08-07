@@ -108,6 +108,7 @@ def network_info_writer(args, referencePath, quant, method, filename):
     referenceData = np.load(referencePath + referenceFileName)
     referenceDataShape = referenceData.shape[0]
     # select data after burn-in and the quantf as estimated values
+    referenceDataMean = np.mean(referenceData[referenceDataShape // 2:, :, :],  axis=0)
     referenceDataQuantiled = np.quantile(referenceData[referenceDataShape//2:, :, :], quant, axis=0)
 
 
@@ -150,7 +151,7 @@ def network_info_writer(args, referencePath, quant, method, filename):
         if not os.path.exists(infoPath):
             os.makedirs(infoPath)
 
-        network = referenceDataQuantiled
+        network = referenceDataMean
         # Set threshold in connectivity matrix based on average p_values
         thresh_network = set_threshold(network, referenceDataQuantiled)
 
