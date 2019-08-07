@@ -153,7 +153,7 @@ referencePath = args.write + '/Chain1/MCMCValues/'
 
 # create fit_par partial function
 pearson_par = partial(network_info_writer, *[args, referencePath, 0.6, 'pearson'])
-mutual_par = partial(network_info_writer, *[args, referencePath, 0.6, 'mutual'])
+mutual_par = partial(network_info_writer, *[args, referencePath, 0.6, 'mutualScore'])
 hawkes_par = partial(network_info_writer, *[args, referencePath, 0.6, 'hawkes'])
 
 # pearson
