@@ -26,7 +26,7 @@ def info(data, method='pearson'):
                 if i > j:
                     continue
                 elif i == j:
-                    c = 1.
+                    c = 0.
                 else:
                     c = corrf(ac, bc)[0, 1]
                 correl[i, j] = c
@@ -38,7 +38,7 @@ def info(data, method='pearson'):
                 if i > j:
                     continue
                 elif i == j:
-                    c = 1.
+                    c = 0.
                 else:
                     c = corrf(mat[i, :].reshape(-1, 1), mat[j, :])[0]
                 correl[i, j] = c
@@ -51,7 +51,7 @@ def info(data, method='pearson'):
                 if i > j:
                     continue
                 elif i == j:
-                    c = 1.
+                    c = 0.
                 else:
                     c = corrf(mat[i, :], mat[j, :])
                 correl[i, j] = c
