@@ -427,3 +427,7 @@ def fill_dict(dicts, totalValues):
     for x in diffs:
         modified_dict[x] = 0
     return modified_dict
+
+
+def symmetrical(data):
+    return (np.array(data) + np.array(data).T) / 2
