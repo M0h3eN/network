@@ -24,8 +24,8 @@ for (p in subDirs){
 
   ## Writing Graph individualy
   for(g in 1:length(graph_lists)){
-    svglite(file = paste('strength-',graph_lists[g], '.svg', sep=''))
-    graphPlot(graphDataList[[g]], graph_lists[g],"strength")
+    svglite(file = paste('strength-', unlist(strsplit(graph_lists[g], ".", fixed = TRUE))[1] , '.svg', sep=''))
+    graphPlot(graphDataList[[g]], "", "strength")
     dev.off()
   }
 
@@ -34,8 +34,8 @@ for (p in subDirs){
 
   ## Writing Graph individualy
   for(g in 1:length(graph_lists)){
-    svglite(file = paste('cluster-',graph_lists[g], '.svg', sep=''))
-    clusterGraph(graphDataList[[g]], graph_lists[g])
+    svglite(file = paste('cluster-', unlist(strsplit(graph_lists[g], ".", fixed = TRUE))[1], '.svg', sep=''))
+    clusterGraph(graphDataList[[g]], "")
     dev.off()
   }
 
