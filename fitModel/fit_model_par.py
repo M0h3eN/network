@@ -60,6 +60,9 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(args, hypers, period, 
     if not(os.path.exists(ratePath)):
         os.makedirs(ratePath)
 
+    if not(os.path.exists(MCMCPath)):
+        os.makedirs(MCMCPath)
+
     for per in range(len(period)):
 
         k = data[per].shape[1]
