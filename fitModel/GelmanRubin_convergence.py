@@ -42,7 +42,7 @@ def compute_gelman_rubin_convergence(args):
 
         W = pd.DataFrame(varianceArr).mean()
         B = pd.DataFrame(thetaBarArr).var() * n
-        varThetaHat = (1 - 1 / n) * W + (1 / n) * B
+        varThetaHat = (1 - (1 / n)) * W + (1 / n) * B
 
         rHat = np.sqrt(varThetaHat / W).to_dict()
 
