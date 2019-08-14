@@ -80,9 +80,9 @@ memory = np.arange(2501, 2701)
 saccade = np.arange(2751, 2951)
 
 firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
-    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-    computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-    for b in range(len(allNeurons))]).transpose(),
+                   computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
+                   computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
+                   for b in range(len(allNeurons))]).transpose(),
               'Mem-In-NoStim': pd.DataFrame([evoked_response(
                   computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
                   computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(memory)]))
@@ -124,9 +124,9 @@ firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
               }
 
 spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
-    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-    for b in range(len(allNeurons))]).transpose(),
+                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
+                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
+                   for b in range(len(allNeurons))]).transpose(),
                'Mem-In-NoStim': pd.DataFrame([evoked_response_count(
                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(memory)]))
@@ -170,9 +170,9 @@ spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
 # slicing time to decompose Enc, Memory, saccade and stimulation difference epochs
 
 neuronalData = {'Enc-In-NoStim': np.array([evoked_response_count(
-    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-    for b in range(len(allNeurons))], dtype=int).transpose(),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
+                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
+                    for b in range(len(allNeurons))], dtype=int).transpose(),
                 'Mem-In-NoStim': np.array([evoked_response_count(
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
                     computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(memory)]))
