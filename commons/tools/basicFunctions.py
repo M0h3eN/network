@@ -126,6 +126,67 @@ def assembleData1(directory):
     return neurons
 
 
+def assembleData2(directory):
+    dirr = directory
+    os.chdir(dirr)
+    filename = os.fsdecode(os.listdir(dirr).__getitem__(0))
+    neurons = {}
+    iter = 0
+    iterp = 0
+    mat_data = sio.loadmat(filename).get(filename.split(".").__getitem__(0))
+    mat_size = list(mat_data.shape)
+    mat_names = list(mat_data.dtype.names)
+
+    for iter0 in range(mat_size[0]):
+        for iter1 in range(mat_size[1]):
+            struct_data = mat_data[iter0, iter1]
+            conds = struct_data[mat_names.__getitem__(2)].T
+            spike_data = struct_data[mat_names.__getitem__(0)]
+            spike_data_shape = list(spike_data.shape)
+            if conds.size > 0:
+                if len(spike_data_shape) > 2:
+                    for iter3 in range(spike_data_shape.__getitem__(2)):
+                        df = pd.DataFrame(spike_data[:, :, iter3])
+                        if sum(df.sum()) > 2000:
+                            colName = generatorTemp(df.shape[1])
+                            df.columns = colName
+                            neurons[iter] = pd.concat([df,
+                                                       pd.DataFrame(conds, columns=['Cond'])],
+                                                      axis=1)
+                            neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
+                            neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
+                            print("Neuron" + str(iterp))
+                            iter = iter + 1
+                            iterp = iterp + 1
+                        else:
+                            print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            iter = iter
+                            iterp = iterp + 1
+                else:
+                    df = pd.DataFrame(spike_data)
+                    if sum(df.sum()) > 2000:
+                        colName = generatorTemp(df.shape[1])
+                        df.columns = colName
+                        neurons[iter] = pd.concat([df,
+                                                   pd.DataFrame(conds, columns=['Cond'])],
+                                                  axis=1)
+                        neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
+                        neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
+                        print("Neuron" + str(iterp))
+                        iter = iter + 1
+                        iterp = iterp + 1
+                    else:
+                        print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        iterp = iterp + 1
+                        iter = iter
+            else:
+                print("Neuron" + str(iterp) + " " + "is empty")
+                iterp = iterp + 1
+
+
+    return neurons
+
+
 def saccade_df(neurons_df, align_point=3000):
     saccade_df = {}
     tmp_list1 = []
@@ -184,6 +245,7 @@ def computeFr(df, minimum=None, maximum=None):
         maximum = df.shape[1]
         dtemp = np.mean(df.iloc[:, minimum:maximum]) * 1000
     return dtemp
+
 
 def evoked_response(df, base_line):
     evoked = (df - np.mean(base_line))
