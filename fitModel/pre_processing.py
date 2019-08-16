@@ -58,8 +58,8 @@ def raw_neuronal_data_info_compute(data, args):
 
     # saving Mutual information charts
 
-    mivaluesNoStim = computeMI(data, saccade_data_set, "noStim")
-    mivaluesStim = computeMI(data, saccade_data_set, "withStim")
+    mivaluesNoStim = computeMI(data, saccade_data_set, "Stim")
+    mivaluesStim = computeMI(data, saccade_data_set, "NoStim")
 
     export_png(plotScat(mivaluesNoStim), filename=writePathMi + 'scatNoStim.png')
     export_png(plotScat(mivaluesStim), filename=writePathMi + 'scatWithStim.png')
