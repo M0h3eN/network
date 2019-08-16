@@ -5,7 +5,7 @@ import pandas as pd
 
 from sklearn.metrics import mutual_info_score
 from bokeh.plotting import figure
-from commons.tools.basicFunctions import conditionSelect, computeSpikeCount
+from commons.tools.basicFunctions import conditionSelect, computeSpikeCount, evoked_response_count, base_line
 
 
 '''
@@ -17,6 +17,14 @@ from commons.tools.basicFunctions import conditionSelect, computeSpikeCount
 
 
 def computeMI(DF, saccad_data, stim_status):
+
+    # Visual start time
+    visual = np.arange(1051, 1251)
+    # Memory start time
+    memory = np.arange(2500, 2700)
+    # Saccade start time
+    saccade = np.arange(2750, 2950)
+
     mutualVisual = []
     mutualMem = []
     mutualSac = []
@@ -27,15 +35,33 @@ def computeMI(DF, saccad_data, stim_status):
 
             # in
 
-            inVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 1050, 1250)
-            inMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inStim'), 2500, 2700)
-            inSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inStim'), 2700, 2950)
+            inVisual = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inStimVis').iloc[:, visual]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inStimVis').iloc[:, base_line(visual)]))
+
+            inMem = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inStimMem').iloc[:, memory]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inStimMem').iloc[:, base_line(visual)]))
+
+            inSac = evoked_response_count(
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inStimSac').iloc[:, saccade]),
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inStimSac').iloc[:, base_line(visual)])
+            )
 
             # out
 
-            outVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 1050, 1250)
-            outMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outStim'), 2500, 2700)
-            outSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outStim'), 2700, 2950)
+            outVisual = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outStimVis').iloc[:, visual]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outStimVis').iloc[:, base_line(visual)]))
+
+            outMem = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outStimMem').iloc[:, memory]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outStimMem').iloc[:, base_line(visual)]))
+
+            outSac = evoked_response_count(
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outStimSac').iloc[:, saccade]),
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outStimSac').iloc[:, base_line(visual)])
+            )
 
             # Mutual Information Score
 
@@ -48,15 +74,33 @@ def computeMI(DF, saccad_data, stim_status):
         else:
             # in
 
-            inVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 1050, 1250)
-            inMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim'), 2500, 2700)
-            inSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inNoStim'), 2700, 2950)
+            inVisual = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim').iloc[:, visual]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim').iloc[:, base_line(visual)]))
+
+            inMem = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim').iloc[:, memory]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='inNoStim').iloc[:, base_line(visual)]))
+
+            inSac = evoked_response_count(
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inNoStim').iloc[:, saccade]),
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='inNoStim').iloc[:, base_line(visual)])
+            )
 
             # out
 
-            outVisual = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 1050, 1250)
-            outMem = computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim'), 2500, 2700)
-            outSac = computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outNoStim'), 2700, 2950)
+            outVisual = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim').iloc[:, visual]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim').iloc[:, base_line(visual)]))
+
+            outMem = evoked_response_count(
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim').iloc[:, memory]),
+                computeSpikeCount(conditionSelect(DF[ni], subStatus='outNoStim').iloc[:, base_line(visual)]))
+
+            outSac = evoked_response_count(
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outNoStim').iloc[:, saccade]),
+                computeSpikeCount(conditionSelect(saccad_data[ni], subStatus='outNoStim').iloc[:, base_line(visual)])
+            )
 
             # Mutual Information Score
 
