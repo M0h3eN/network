@@ -16,21 +16,21 @@ from bokeh.plotting import figure
 
 def createPlotDF(DF, period, ind):
     if period == 'sac':
-        inStim = sig.savgol_filter(DF[ind][0], 315, 3)
-        x = np.linspace(0, 3700, len(inStim)) - 3000
-        inNoStim = sig.savgol_filter(DF[ind][2], 315, 3)
-        outStim = sig.savgol_filter(DF[ind][1], 315, 3)
-        outNoStim = sig.savgol_filter(DF[ind][3], 315, 3)
+        inStim = sig.savgol_filter(DF[ind][0], 215, 3)
+        x = np.linspace(0, 3400, len(inStim)) - 3000
+        inNoStim = sig.savgol_filter(DF[ind][2], 215, 3)
+        outStim = sig.savgol_filter(DF[ind][1], 215, 3)
+        outNoStim = sig.savgol_filter(DF[ind][3], 215, 3)
         df = pd.DataFrame(data=dict(x=x,
                                     inStim=inStim,
                                     inNoStim=inNoStim,
                                     outStim=outStim,
                                     outNoStim=outNoStim))
     else:
-        inStim = sig.savgol_filter(DF[ind][0], 415, 3)
-        inNoStim = sig.savgol_filter(DF[ind][2], 415, 3)
-        outStim = sig.savgol_filter(DF[ind][1], 415, 3)
-        outNoStim = sig.savgol_filter(DF[ind][3], 415, 3)
+        inStim = sig.savgol_filter(DF[ind][0], 350, 3)
+        inNoStim = sig.savgol_filter(DF[ind][2], 350, 3)
+        outStim = sig.savgol_filter(DF[ind][1], 350, 3)
+        outNoStim = sig.savgol_filter(DF[ind][3], 350, 3)
         x = np.linspace(0, 3000, len(inStim)) - 1000
         df = pd.DataFrame(data=dict(x=x,
                                     inStim=inStim,
