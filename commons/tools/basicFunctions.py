@@ -55,6 +55,37 @@ def generateEyeDF(eye, ed):
     return tdf
 
 
+def generateEyeDF2(eye):
+    tempList = {}
+    eye_data_names = list(eye.dtype.names)
+    for i, name in enumerate(eye_data_names):
+        tempList[i] = pd.DataFrame(data=eye[name][0][0])
+    tdf = pd.DataFrame(data=pd.concat([tempList[0], tempList[1],
+                                       tempList[2], tempList[3],
+                                       tempList[4], tempList[5]], axis=1))
+    colsName = [
+        'SacStartTime',
+        'SacStopTime',
+        'SacStartPosX',
+        'SacStartPosY',
+        'SacStopPosX',
+        'SacStopPosY',
+        'R',
+        'Theta'
+    ]
+
+    tdf.columns = colsName
+
+    # setting all start time below 3000 equal to mean of the value above 3000
+
+    condi = np.where(tdf['SacStartTime'] > 3000)
+    condil = np.where(tdf['SacStartTime'] < 3000)
+    value = np.ceil(tdf['SacStartTime'].loc[condi].mean())
+    tdf['SacStartTime'].loc[condil] = value
+
+    return tdf
+
+
 # assemble data in all neurons
 
 def assembleData(directory):
@@ -133,7 +164,8 @@ def assembleData2(directory):
     neurons = {}
     iter = 0
     iterp = 0
-    mat_data = sio.loadmat(filename).get(filename.split(".").__getitem__(0))
+    mat_data = sio.loadmat(filename)
+    mat_data = mat_data[list(filter(lambda x: not x.startswith("__"), mat_data.keys())).__getitem__(0)]
     mat_size = list(mat_data.shape)
     mat_names = list(mat_data.dtype.names)
 
@@ -142,6 +174,7 @@ def assembleData2(directory):
             struct_data = mat_data[iter0, iter1]
             conds = struct_data[mat_names.__getitem__(2)].T
             spike_data = struct_data[mat_names.__getitem__(0)]
+            eye_data = struct_data[mat_names.__getitem__(3)]
             spike_data_shape = list(spike_data.shape)
             if conds.size > 0:
                 if len(spike_data_shape) > 2:
@@ -150,11 +183,10 @@ def assembleData2(directory):
                         if sum(df.sum()) > 2000:
                             colName = generatorTemp(df.shape[1])
                             df.columns = colName
-                            neurons[iter] = pd.concat([df,
-                                                       pd.DataFrame(conds, columns=['Cond'])],
-                                                      axis=1)
+                            neurons[iter] = pd.concat([df, pd.DataFrame(conds, columns=['Cond'])], axis=1)
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
+                            neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
                             print("Neuron" + str(iterp))
                             iter = iter + 1
                             iterp = iterp + 1
@@ -167,11 +199,10 @@ def assembleData2(directory):
                     if sum(df.sum()) > 2000:
                         colName = generatorTemp(df.shape[1])
                         df.columns = colName
-                        neurons[iter] = pd.concat([df,
-                                                   pd.DataFrame(conds, columns=['Cond'])],
-                                                  axis=1)
+                        neurons[iter] = pd.concat([df, pd.DataFrame(conds, columns=['Cond'])], axis=1)
                         neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                         neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
+                        neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
                         print("Neuron" + str(iterp))
                         iter = iter + 1
                         iterp = iterp + 1
@@ -201,7 +232,7 @@ def saccade_df(neurons_df, align_point=3000):
         for i in range(len(saccade_time)):
             pre_col_index = np.arange((saccade_time[i] - align_point), saccade_time[i])
 
-            #Check for end point selection
+            #Check for end point selection  
             if (2 * saccade_time[i] - align_point) <= (neurons_df[numerator].columns.get_loc("Cond") - 1):
                 end_point = (2*saccade_time[i] - align_point)
             else:
@@ -293,15 +324,53 @@ def extract_from_dict(diction):
     return key, value
 
 
-# select different conditions
+# select different conditions based on:
+
+# cond1= target in, stimulation during fixation
+# cond2= target out, stimulation during fixation
+# cond3= target in, stimulation during visual period
+# cond4= target out, stimulation during visual period
+# cond5= target in, stimulation during memory period
+# cond6= target out, stimulation during memory period
+# cond7= target in, stimulation during saccade period
+# cond8= target out, stimulation during saccade period
+# cond9= target in, no stimulation
+# cond10= target out, no stimulation
+# cond11= target in, no stimulation
+# cond12= target out, no stimulation
+# cond13= target in, no stimulation
+# cond14= target out, no stimulation
+# cond15= target in, no stimulation
+# cond16= target out, no stimulation
+
 
 def conditionSelect(df, subStatus):
-    if subStatus == 'inStim':
+
+    if subStatus == 'inStimFixation':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 1) & (df['Cond'] == 1)]
+    elif subStatus == 'inStimVis':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 1) & (df['Cond'] == 3)]
+    elif subStatus == 'inStimMem':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 1) & (df['Cond'] == 5)]
+    elif subStatus == 'inStimSac':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 1) & (df['Cond'] == 7)]
+
+    elif subStatus == 'outStimFixation':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 0) & (df['Cond'] == 2)]
+    elif subStatus == 'outStimVis':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 0) & (df['Cond'] == 4)]
+    elif subStatus == 'outStimMem':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 0) & (df['Cond'] == 6)]
+    elif subStatus == 'outStimSac':
+        dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 0) & (df['Cond'] == 8)]
+
+    elif subStatus == 'inStim':
         dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 1)]
     elif subStatus == 'outStim':
         dfNew = df[(df['stimStatus'] == 1) & (df['inOutStatus'] == 0)]
     elif subStatus == 'inNoStim':
         dfNew = df[(df['stimStatus'] == 0) & (df['inOutStatus'] == 1)]
+
     elif subStatus == 'allStim':
         dfNew = df[(df['stimStatus'] == 1)]
     elif subStatus == 'allNoStim':
@@ -493,3 +562,7 @@ def fill_dict(dicts, totalValues):
 
 def symmetrical(data):
     return (np.array(data) + np.array(data).T) / 2
+
+
+# Base line start time
+def base_line(x): return np.arange((x[0] - 1) - len(x), (x[0] - 1))
