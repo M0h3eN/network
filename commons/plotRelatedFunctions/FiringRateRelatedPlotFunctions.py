@@ -27,10 +27,10 @@ def createPlotDF(DF, period, ind):
                                     outStim=outStim,
                                     outNoStim=outNoStim))
     else:
-        inStim = sig.savgol_filter(DF[ind][0], 350, 3)
-        inNoStim = sig.savgol_filter(DF[ind][2], 350, 3)
-        outStim = sig.savgol_filter(DF[ind][1], 350, 3)
-        outNoStim = sig.savgol_filter(DF[ind][3], 350, 3)
+        inStim = sig.savgol_filter(DF[ind][0], 351, 3)
+        inNoStim = sig.savgol_filter(DF[ind][2], 351, 3)
+        outStim = sig.savgol_filter(DF[ind][1], 351, 3)
+        outNoStim = sig.savgol_filter(DF[ind][3], 351, 3)
         x = np.linspace(0, 3000, len(inStim)) - 1000
         df = pd.DataFrame(data=dict(x=x,
                                     inStim=inStim,
