@@ -89,7 +89,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
     # values near -1 indicate lattice shape, value near to 1 indicate random graph
     # smallworldness index 2-Sigma: values greater than 1 indicate small world value property,
     # specifically when its greater or equal than 3
-    sigma, omega = gp.small_world_index(G, niter=4, nrand=4)
+    sigma, omega = gp.small_world_index(G, niter=100, nrand=16)
     # density
     dens = nx.density(G)
     # degree distribution
