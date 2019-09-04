@@ -9,6 +9,8 @@ from networkx import random_reference, lattice_reference
 
 
 # Columns name
+from scipy.stats import ttest_1samp
+
 
 def generatorTemp(size):
     for ii in range(size):
@@ -566,3 +568,31 @@ def symmetrical(data):
 
 # Base line start time
 def base_line(x): return np.arange((x[0] - 1) - len(x), (x[0] - 1))
+
+# get Mean of MCMC chains
+def get_mean_over_all_chains(path, epoch, chain_number):
+    res = np.array([np.array(pd.read_csv(path + epoch + "__" + str(y) + ".csv")) for y in chain_number]).mean(axis=0)
+    return res
+
+# A function to check significacy of a network measure
+def check_significance(data, neuron, method):
+    test_resualt = ttest_1samp(np.unique(data[data.neuron == neuron][method]), 0)
+    return test_resualt[1]
+
+# A function to compute error measure -- .95 confidence interval
+def compute_error(data, neuron, method):
+    values = np.unique(data[data.neuron == neuron][method])
+    error_resualt = np.mean(values) - 1.96 * (np.std(values) / len(values))
+    return error_resualt
+
+# A function to pick color based on significancy of a network measure
+def significance_color(data, neuron, method, thresh):
+
+    defualtColor = 'rgba(204,204,204,1)'
+    significantColor = 'rgba(222,45,38,0.8)'
+
+    if check_significance(data, neuron, method) < thresh:
+        return significantColor
+    else:
+        return defualtColor
+
