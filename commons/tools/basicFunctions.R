@@ -1,10 +1,12 @@
-# Title     : Various User defined function, Mainly needed for graph visualization
+# Title     : Various User defined function, Mostly needed for graph visualization
 # Objective : Visualization
 # Created by: mohsen
 # Created on: 8/7/19
 
 library(igraph)
 library(svglite)
+library(ggplot2)
+require(dplyr)
 
 # Rescale between a and b
 stan = function(x, a, b){
@@ -56,4 +58,20 @@ clusterGraph = function(g, main){
   plot(cg, edge.arrow.mode=0, g, main = main)
 }
 
+# A function to take union among all chains
+applyFunToGraphList = function(path, all_files, epoch){
+  graph_lists = all_files[startsWith(all_files, epoch) & endsWith(all_files, "__99.gml")]
+  graphDataList = lapply(graph_lists, function(x) read_graph(file = paste(path, x, sep = ''), format = "gml"))
+  graphDataList[[1]]
+}
 
+# A function to degree distribution
+plot_degree = function(data, x){
+
+ p = ggplot(data = filter(data, epoch == x), mapping = aes(x=degree)) +
+    stat_density(bw=0.7, alpha = 0.4, color="red", fill="red") + ylab("") + xlab("") +
+    theme_classic() + theme(legend.position = "none", text = element_text(size=30),
+                            axis.text.x=element_text(colour="black"), axis.text.y=element_text(colour="black"))
+
+  return(p)
+}
