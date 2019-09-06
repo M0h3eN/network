@@ -74,5 +74,6 @@ write_path = paste(path, "degreeDistribution", "/", sep = "")
 setwd(file.path(write_path))
 
 for (i in epochsUnique){
-  ggsave(filename = paste(i, ".svg",sep = ""), plot = plot_degree(deg_df, i), width=10, height=8)
+  ggsave(filename = paste(i, ".svg",sep = ""), plot = plot_degree(deg_df, i),
+  width = 10, height = 8, units = "in", dpi = "retina", device='svg')
 }
