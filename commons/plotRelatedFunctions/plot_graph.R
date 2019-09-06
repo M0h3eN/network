@@ -16,10 +16,23 @@ subDirs = intersect(subDirs, requiredDires)
 for (p in subDirs){
 
   read_path = paste(path, p, "/", sep = "")
-  write_path = paste(read_path, "graph_plots", "/", sep = "")
+  write_path = paste(read_path, "graphPlots", "/", sep = "")
+  strength_path = paste(write_path, "strength", "/", sep = "")
+  hub_path = paste(write_path, "hub", "/", sep = "")
+  cluster_path = paste(write_path, "cluster", "/", sep = "")
+
 
   if(!dir.exists(write_path)){
       dir.create(file.path(write_path))
+  }
+  if(!dir.exists(strength_path)){
+      dir.create(file.path(strength_path))
+  }
+  if(!dir.exists(hub_path)){
+      dir.create(file.path(hub_path))
+  }
+  if(!dir.exists(cluster_path)){
+      dir.create(file.path(cluster_path))
   }
   setwd(file.path(write_path))
 
@@ -29,14 +42,14 @@ for (p in subDirs){
 
 ## Writing Graph individualy - strength
   for(g in 1:length(epochs_ordered)){
-    svglite(file = paste('strength-', epochs_ordered[g] , '.svg', sep=''))
+    svglite(file = paste(strength_path, epochs_ordered[g] , '.svg', sep=''))
     graphPlot(graphDataList[[g]], "", "strength")
     dev.off()
   }
 
 ## Writing Graph individualy - hub
   for(g in 1:length(epochs_ordered)){
-    svglite(file = paste('hub-', epochs_ordered[g] , '.svg', sep=''))
+    svglite(file = paste(hub_path, epochs_ordered[g] , '.svg', sep=''))
     graphPlot(graphDataList[[g]], "", "hub")
     dev.off()
   }
@@ -46,7 +59,7 @@ for (p in subDirs){
 
 ## Writing Graph individualy
   for(g in 1:length(epochs_ordered)){
-    svglite(file = paste('cluster-', epochs_ordered[g], '.svg', sep=''))
+    svglite(file = paste(cluster_path, epochs_ordered[g], '.svg', sep=''))
     clusterGraph(graphDataList[[g]], "")
     dev.off()
   }
