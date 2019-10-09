@@ -100,10 +100,7 @@ def graph_centrality(data: pd.core.frame.DataFrame, cen_method: str, period: str
     """
     if not os.path.exists(write_path):
         os.makedirs(write_path)
-
-    DF = data[(data.epoch.str.startswith(period) &
-               data.epoch.str.contains(status))]\
-        .groupby(['neuron', 'chain'], as_index=False, sort=False).mean()
+    DF = data[(data.epoch.str.strip() == period + '-' + status)].groupby(['neuron', 'chain'], as_index=False, sort=False).mean()
 
     neuron_list = list(data['neuron'][0:23])
     # Create Error bar measure based on .95 confidence interval
@@ -139,6 +136,48 @@ def graph_centrality(data: pd.core.frame.DataFrame, cen_method: str, period: str
 
     pio.write_image(fig, write_path + str(cen_method) + '__' + str(period) + '-' + str(status) + '.svg')
 
+
+def information_assembly(data: pd.core.frame.DataFrame, info_method: str, period: str, status: str, write_path: str) -> None:
+    """
+    Network averaged information in neurons assemble based on correlation and mutual information with significance check
+    :param data: long format information pandas data frame
+    :param info_method: connectivity information method - correlation or mutual information
+    :param period: epochs - Vis, Mem, Sac
+    :param status: conditions - Stim, NoStim, diff
+    :param write_path: save directory
+    """
+    if not os.path.exists(write_path):
+        os.makedirs(write_path)
+
+    DF = data[(data.epoch.str.strip() == period + '-' + status) & (data.method.str.strip() == info_method)]
+
+
+    trace0 = go.Bar(
+        x=DF.loc[:, 'lag'],
+        y=DF.loc[:, 'info'],
+        error_y=dict(
+            type='data',
+            array=DF.loc[:, 'SEM'],
+            visible=True
+        ),
+        marker=dict(
+            color=DF.loc[:, 'colorList']),
+    )
+
+    data = [trace0]
+    layout = go.Layout(
+        width=1350,
+        height=752,
+        barmode='group')
+
+    fig = go.Figure(data=data, layout=layout)
+
+    # Axis Config
+    fig.update_xaxes(tickangle=45, dtick=10, tickfont=dict(family='Rockwell', color='crimson', size=35))
+    fig.update_yaxes(tickfont=dict(family='Rockwell', color='crimson', size=35))
+
+    pio.write_image(fig, write_path + str(info_method) + '__' + str(period) + '-' + str(status) + '.svg')
+
     
 def plot_all_cen(data: pd.core.frame.DataFrame, method: str, write_path) -> None:
     """
@@ -161,6 +200,27 @@ def plot_all_cen(data: pd.core.frame.DataFrame, method: str, write_path) -> None
     graph_centrality(data, method, 'Sac', 'diff', write_path)
 
 
+def plot_all_info(data: pd.core.frame.DataFrame, method: str, write_path) -> None:
+    """
+    Plot graph centrality for all epochs and conditions
+    :param data: long format centrality pandas data frame
+    :param method: centrality method - closeness_centrality, eigenvector_centrality, betweenness_centrality,
+    harmonic_centrality, load_centrality
+    :param write_path: save directory
+    """
+    information_assembly(data, method, 'Vis', 'NoStim', write_path)
+    information_assembly(data, method, 'Mem', 'NoStim', write_path)
+    information_assembly(data, method, 'Sac', 'NoStim', write_path)
+
+    information_assembly(data, method, 'Vis', 'Stim', write_path)
+    information_assembly(data, method, 'Mem', 'Stim', write_path)
+    information_assembly(data, method, 'Sac', 'Stim', write_path)
+
+    information_assembly(data, method, 'Vis', 'diff', write_path)
+    information_assembly(data, method, 'Mem', 'diff', write_path)
+    information_assembly(data, method, 'Sac', 'diff', write_path)
+
+
 def graph_indexes_grouped_bar(df: pd.core.frame.DataFrame, file_name: str, leg: bool) -> None:
     """
 
@@ -180,7 +240,7 @@ def graph_indexes_grouped_bar(df: pd.core.frame.DataFrame, file_name: str, leg: 
         name=columnList[0].replace("_", " "),
         error_y=dict(
             type='data',
-            array=list(map(lambda x: df[(df.epoch == x)][columnList[0]].mean() + 1.96 * (
+            array=list(map(lambda x: 1.96 * (
                         df[(df.epoch == x)][columnList[0]].std() / df[(df.epoch == x)][columnList[0]].size),
                            x_axis_names)),
             visible=True
@@ -192,7 +252,7 @@ def graph_indexes_grouped_bar(df: pd.core.frame.DataFrame, file_name: str, leg: 
         name=columnList[1].replace("_", " "),
         error_y=dict(
             type='data',
-            array=list(map(lambda x: df[(df.epoch == x)][columnList[1]].mean() + 1.96 * (
+            array=list(map(lambda x: 1.96 * (
                         df[(df.epoch == x)][columnList[1]].std() / df[(df.epoch == x)][columnList[1]].size),
                            x_axis_names)),
             visible=True
@@ -204,7 +264,7 @@ def graph_indexes_grouped_bar(df: pd.core.frame.DataFrame, file_name: str, leg: 
         name=columnList[2].replace("_", " "),
         error_y=dict(
             type='data',
-            array=list(map(lambda x: df[(df.epoch == x)][columnList[2]].mean() + 1.96 * (
+            array=list(map(lambda x: 1.96 * (
                         df[(df.epoch == x)][columnList[2]].std() / df[(df.epoch == x)][columnList[2]].size),
                            x_axis_names)),
             visible=True
@@ -216,7 +276,7 @@ def graph_indexes_grouped_bar(df: pd.core.frame.DataFrame, file_name: str, leg: 
         name=columnList[3].replace("_", " "),
         error_y=dict(
             type='data',
-            array=list(map(lambda x: df[(df.epoch == x)][columnList[3]].mean() + 1.96 * (
+            array=list(map(lambda x: 1.96 * (
                         df[(df.epoch == x)][columnList[3]].std() / df[(df.epoch == x)][columnList[3]].size),
                            x_axis_names)),
             visible=True
