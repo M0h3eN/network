@@ -132,9 +132,9 @@ def complete_df(path, method, epoch, chain):
     if(epoch_name_sp[0] == 'Enc'):
         epoch_name_sp[0] = 'Vis'
     if(len(epoch_name_sp) > 2):
-           epoch_name = epoch_name_sp[0] + '-' +  epoch_name_sp[2]
+           epoch_name = epoch_name_sp[0] + '-' + epoch_name_sp[2]
     else:
-        epoch_name = epoch_name_sp[0] + '-' +  epoch_name_sp[1]
+        epoch_name = epoch_name_sp[0] + '-' + epoch_name_sp[1]
     df['epoch'] = epoch_name
     df['chain'] = chain
     return df
