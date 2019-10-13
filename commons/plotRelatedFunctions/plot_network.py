@@ -137,19 +137,23 @@ def graph_centrality(data: pd.core.frame.DataFrame, cen_method: str, period: str
     pio.write_image(fig, write_path + str(cen_method) + '__' + str(period) + '-' + str(status) + '.svg')
 
 
-def information_assembly(data: pd.core.frame.DataFrame, info_method: str, period: str, status: str, write_path: str) -> None:
+def information_assembly(data: pd.core.frame.DataFrame, info_method: str, period: str, status: str, in_out: str,
+                         write_path: str) -> None:
     """
     Network averaged information in neurons assemble based on correlation and mutual information with significance check
     :param data: long format information pandas data frame
     :param info_method: connectivity information method - correlation or mutual information
     :param period: epochs - Vis, Mem, Sac
     :param status: conditions - Stim, NoStim, diff
+    :param in_out: in/out receptive field
     :param write_path: save directory
     """
     if not os.path.exists(write_path):
         os.makedirs(write_path)
 
-    DF = data[(data.epoch.str.strip() == period + '-' + status) & (data.method.str.strip() == info_method)]
+    DF = data[(data.epoch.str.strip() == period + '-' + status) &
+              (data['in/out'] == in_out) &
+              (data.method.str.strip() == info_method)]
 
 
     trace0 = go.Bar(
@@ -176,7 +180,8 @@ def information_assembly(data: pd.core.frame.DataFrame, info_method: str, period
     fig.update_xaxes(tickangle=45, dtick=10, tickfont=dict(family='Rockwell', color='crimson', size=35))
     fig.update_yaxes(tickfont=dict(family='Rockwell', color='crimson', size=35))
 
-    pio.write_image(fig, write_path + str(info_method) + '__' + str(period) + '-' + str(status) + '.svg')
+    pio.write_image(fig, write_path + str(info_method) + '__' + str(period) + '-' + str(in_out) + '-' +
+                    str(status) + '.svg')
 
     
 def plot_all_cen(data: pd.core.frame.DataFrame, method: str, write_path) -> None:
@@ -203,22 +208,30 @@ def plot_all_cen(data: pd.core.frame.DataFrame, method: str, write_path) -> None
 def plot_all_info(data: pd.core.frame.DataFrame, method: str, write_path) -> None:
     """
     Plot graph centrality for all epochs and conditions
-    :param data: long format centrality pandas data frame
-    :param method: centrality method - closeness_centrality, eigenvector_centrality, betweenness_centrality,
-    harmonic_centrality, load_centrality
+    :param data: long format information pandas data frame
+    :param method: connectivity information method - correlation or mutual information
     :param write_path: save directory
     """
-    information_assembly(data, method, 'Vis', 'NoStim', write_path)
-    information_assembly(data, method, 'Mem', 'NoStim', write_path)
-    information_assembly(data, method, 'Sac', 'NoStim', write_path)
+    information_assembly(data, method, 'Vis', 'NoStim', 'In', write_path)
+    information_assembly(data, method, 'Mem', 'NoStim', 'In', write_path)
+    information_assembly(data, method, 'Sac', 'NoStim', 'In', write_path)
+    information_assembly(data, method, 'Vis', 'NoStim', 'Out', write_path)
+    information_assembly(data, method, 'Mem', 'NoStim', 'Out', write_path)
+    information_assembly(data, method, 'Sac', 'NoStim', 'Out', write_path)
 
-    information_assembly(data, method, 'Vis', 'Stim', write_path)
-    information_assembly(data, method, 'Mem', 'Stim', write_path)
-    information_assembly(data, method, 'Sac', 'Stim', write_path)
+    information_assembly(data, method, 'Vis', 'Stim', 'In', write_path)
+    information_assembly(data, method, 'Mem', 'Stim', 'In', write_path)
+    information_assembly(data, method, 'Sac', 'Stim', 'In', write_path)
+    information_assembly(data, method, 'Vis', 'Stim', 'Out', write_path)
+    information_assembly(data, method, 'Mem', 'Stim', 'Out', write_path)
+    information_assembly(data, method, 'Sac', 'Stim', 'Out', write_path)
 
-    information_assembly(data, method, 'Vis', 'diff', write_path)
-    information_assembly(data, method, 'Mem', 'diff', write_path)
-    information_assembly(data, method, 'Sac', 'diff', write_path)
+    information_assembly(data, method, 'Vis', 'Diff', 'In', write_path)
+    information_assembly(data, method, 'Mem', 'Diff', 'In', write_path)
+    information_assembly(data, method, 'Sac', 'Diff', 'In', write_path)
+    information_assembly(data, method, 'Vis', 'Diff', 'Out', write_path)
+    information_assembly(data, method, 'Mem', 'Diff', 'Out', write_path)
+    information_assembly(data, method, 'Sac', 'Diff', 'Out', write_path)
 
 
 def graph_indexes_grouped_bar(df: pd.core.frame.DataFrame, file_name: str, leg: bool) -> None:
@@ -307,3 +320,67 @@ def graph_indexes_grouped_bar(df: pd.core.frame.DataFrame, file_name: str, leg: 
     )
 
     pio.write_image(fig, str(file_name) + '.svg')
+
+
+def information_assembly_grouped_bar(df: pd.core.frame.DataFrame, write_path: str, status: str,
+                                     info_method, leg: bool) -> None:
+    """
+
+    :param df: aggregated information assembly (median) data frame- Stim, NoStim, diff
+    :param write_path: path to write
+    :param status: conditions - Stim, NoStim, Diff
+    :param info_method: information method correlation or mutual information
+    :param leg: whether legend is visible or not
+    """
+    df = df[(df.method.str.strip() == info_method) & (df.epoch.str.contains(status))]
+    filt = lambda st, data_list: list(filter(lambda x: st in x, data_list))[0]
+    columnList = ['In', 'Out']
+
+    colls = df.loc[:, 'epoch'].unique()
+    x_axis_names = [filt("Vis", colls), filt("Mem", colls), filt("Sac", colls)]
+
+    trace1 = go.Bar(
+        x=list(map(lambda x: x.split("-")[0], x_axis_names)),
+        y=list(df[(df['in/out'] == 'In')]['info']),
+        name=columnList[0],
+        error_y=dict(
+            type='data',
+            array=list(df[(df['in/out'] == 'In')]['SEM']),
+            visible=True
+        )
+    )
+    trace2 = go.Bar(
+        x=list(map(lambda x: x.split("-")[0], x_axis_names)),
+        y=list(df[(df['in/out'] == 'Out')]['info']),
+        name=columnList[1],
+        error_y=dict(
+            type='data',
+            array=list(df[(df['in/out'] == 'Out')]['SEM']),
+            visible=True
+        )
+    )
+
+    data = [trace1, trace2]
+    layout = go.Layout(
+        width=1350,
+        height=752,
+        barmode='group',
+    )
+
+    fig = go.Figure(data=data, layout=layout)
+    # Axis Config
+    fig.update_xaxes(tickfont=dict(family='Rockwell', color='crimson', size=30))
+    fig.update_yaxes(tickfont=dict(family='Rockwell', color='crimson', size=30))
+
+    # Legend config
+    fig.layout.update(
+        showlegend=leg,
+        legend=go.layout.Legend(
+            font=dict(
+                family="Courier New, monospace",
+                size=35,
+                color="black")
+        )
+    )
+
+    pio.write_image(fig, write_path + str(info_method) + '-' + str(status) + '.svg')
