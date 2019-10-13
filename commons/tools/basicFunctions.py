@@ -651,11 +651,11 @@ def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.co
                 neurons_df, 'inNoStim', visual, typ, lag).mean(axis=1)
     elif epoch == 'Mem-In-Diff':
         if typ == 'evocked':
-            array_data = epoch_extractor(neurons_df, 'inStimMem', visual, typ, lag) - epoch_extractor(neurons_df,
+            array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag) - epoch_extractor(neurons_df,
                                                                                                       'inNoStim',
-                                                                                                      visual, typ, lag)
+                                                                                               visual, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'inStimMem', visual, typ, lag).mean(axis=1) - epoch_extractor(
+            array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag).mean(axis=1) - epoch_extractor(
                 neurons_df, 'inNoStim', visual, typ, lag).mean(axis=1)
     elif epoch == 'Sac-In-Diff':
         if typ == 'evocked':
