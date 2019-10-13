@@ -36,7 +36,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
         if not os.path.exists(infoPath):
             os.makedirs(infoPath)
 
-        network = info(data=data, method='pearson')
+        network = info(datax=data, datay=data, method='pearson')
         # Set threshold in connectivity matrix based on average p_values
         thresh_network = set_threshold(network, referenceDataQuantiled)
 
@@ -47,7 +47,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
         if not os.path.exists(infoPath):
             os.makedirs(infoPath)
 
-        network = info(data=data, method='mutual')
+        network = info(datax=data, datay=data, method='mutual')
         # Set threshold in connectivity matrix based on average p_values
         thresh_network = set_threshold(network, referenceDataQuantiled)
 
@@ -57,7 +57,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
         if not os.path.exists(infoPath):
             os.makedirs(infoPath)
 
-        network = info(data=data, method='mutualScore')
+        network = info(datax=data, datay=data, method='mutualScore')
         # Set threshold in connectivity matrix based on average p_values
         thresh_network = set_threshold(network, referenceDataQuantiled)
 
