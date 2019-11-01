@@ -5,13 +5,12 @@ import pandas as pd
 import tqdm
 
 from argparse import ArgumentParser
-from commons.tools.basicFunctions import (assembleData2, conditionSelect, saccade_df,\
-                                          computeSpikeCount, evoked_response_count,
-                                          computeFr, evoked_response, base_line)
+from commons.tools.basicFunctions import (assembleData2, saccade_df, generate_lagged_all_epoch_dict)
 from fitModel.fit_discrete_Hawkes import fit_model_discrete_time_network_hawkes_spike_and_slab
 from fitModel.pre_processing import raw_neuronal_data_info_compute, split_epoch_condition
 from fitModel.post_processing import network_info_writer, complete_df
 from fitModel.GelmanRubin_convergence import compute_gelman_rubin_convergence
+from fitModel.fitVlmc import fit_VLMC
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
@@ -22,23 +21,22 @@ parser.add_argument('-d', '--data', action='store',
                     dest='data', help='Raw data directory')
 
 parser.add_argument('-H', '--host', action='store',
-                    dest='host', help='MongoDB host name')
+                    default='localhost', dest='host', help='MongoDB host name')
 
 parser.add_argument('-p', '--port', action='store',
-                    dest='port', help='MongoDB port number')
+                    default='27017', dest='port', help='MongoDB port number')
 
 parser.add_argument('-w', '--write', action='store',
                     dest='write', help='Output directory')
 
 parser.add_argument('-s', '--sparsity', action='store',
-                    dest='sparsity', help='Initial sparsity of the network', type=float)
+                    default=0.5,  dest='sparsity', help='Initial sparsity of the network', type=float)
 
 parser.add_argument('-S', '--self', action='store_true',
-                    default=False,
-                    dest='self', help='Allow self connection')
+                    default=False, dest='self', help='Allow self connection')
 
 parser.add_argument('-l', '--lag', action='store',
-                    dest='lag', help='Impulse response lag', type=int)
+                    default=50, dest='lag', help='Impulse response lag', type=int)
 
 parser.add_argument('-i', '--iter', action='store',
                     dest='iter', help='Number of MCMC iteration', type=int)
@@ -54,8 +52,10 @@ args = parser.parse_args()
 # parallel computing config
 pool = Pool(cpu_count())
 
-# prepare data
+# Data preparation
+start_time_initial = time.time()
 
+start_time = time.time()
 # read all neurons
 dirr = os.fsencode(args.data)
 allNeurons = assembleData2(dirr)
@@ -64,221 +64,136 @@ saccad_df = saccade_df(allNeurons, 3000)
 minTime = np.min([allNeurons[x].shape[1] for x in range(len(allNeurons))])
 # Find total spike count across all neurons
 number_of_column_added = len(list(filter(lambda x: not x.startswith("T"), allNeurons.get(0).columns)))
+
+print('************ Neurons assemblies completed in' +
+      " %s minutes " % round((time.time() - start_time) / 60, 4) + ' ************')
+
+start_time = time.time()
+
+print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Start Variable Length Markov Chains Fitting ' +
+      '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+allNeuronsVLMC = fit_VLMC(allNeurons, minTime, number_of_column_added)
+saccad_df_VLMC = saccade_df(allNeuronsVLMC, 3000)
+
+print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ VLMC fit completed in' +
+      " %s hours " % round((time.time() - start_time) / (60*60), 4) + '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+
 sorted_total_spike_count = sorted(tuple([(x, sum(allNeurons[x].iloc[:, 0:(minTime - number_of_column_added)].sum()))
                                          for x in range(len(allNeurons))]), key=lambda tup: tup[1])
+sorted_total_spike_count_vlmc = sorted(
+    tuple([(x, sum(allNeuronsVLMC[x].iloc[:, 0:(minTime - number_of_column_added)].sum()))
+           for x in range(len(allNeuronsVLMC))]), key=lambda tup: tup[1])
 
 print('**** Total spike count across neurons sorted ascending ****')
 for x in range(len(sorted_total_spike_count)):
     print('Neuron: ' + str(sorted_total_spike_count[x][0]) +
           ' Total Spike Count: ' + str(sorted_total_spike_count[x][1]))
 
-# slicing time to decompose Enc, Memory and saccade times
-# Visual start time
-visual = np.arange(1051, 1251)
-# Memory start time
-memory = np.arange(2500, 2700)
-# Saccade start time
-saccade = np.arange(2750, 2950)
+print('**** Total VLMC fitted spike count across neurons sorted ascending ****')
+for x in range(len(sorted_total_spike_count_vlmc)):
+    print('Neuron: ' + str(sorted_total_spike_count_vlmc[x][0]) +
+          ' Total Spike Count: ' + str(sorted_total_spike_count_vlmc[x][1]))
 
-# slicing time to decompose Enc, Memory, saccade and stimulation difference epochs
+all_neuron_dict_list = [allNeurons, allNeuronsVLMC]
+all_saccade_dict_list = [saccad_df, saccad_df_VLMC]
+parrent_write_paths = ['Raw', 'VLMC']
+writeArg = args.write
 
-firingRate = {'Enc-In-NoStim': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Mem-In-NoStim': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Sac-In-NoStim': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, saccade]),
-                  computeFr(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Enc-In-Stim': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, visual]),
-                  computeFr(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Mem-In-Stim': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, memory]),
-                  computeFr(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Sac-In-Stim': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, saccade]),
-                  computeFr(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Enc-diff': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, visual]) -
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-                  computeFr(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, base_line(visual)]) -
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Mem-diff': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, memory]) -
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
-                  computeFr(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, base_line(visual)]) -
-                  computeFr(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose(),
-              'Sac-diff': pd.DataFrame([evoked_response(
-                  computeFr(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, saccade]) -
-                  computeFr(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, saccade]),
-                  computeFr(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, base_line(visual)]) -
-                  computeFr(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, base_line(visual)]))
-                  for b in range(len(allNeurons))]).transpose()
-              }
 
-spikeCounts = {'Enc-In-NoStim': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Mem-In-NoStim': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Sac-In-NoStim': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, saccade]),
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Enc-In-Stim': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, visual]),
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Mem-In-Stim': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, memory]),
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Sac-In-Stim': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, saccade]),
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Enc-diff': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, visual]) -
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, base_line(visual)]) -
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Mem-diff': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, memory]) -
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, base_line(visual)]) -
-                   computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose(),
-               'Sac-diff': pd.DataFrame([evoked_response_count(
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, saccade]) -
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, saccade]),
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, base_line(visual)]) -
-                   computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, base_line(visual)]))
-                   for b in range(len(allNeurons))]).transpose()
-               }
+for i in range(len(parrent_write_paths)):
 
-neuronalData = {'Enc-In-NoStim': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Mem-In-NoStim': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Sac-In-NoStim': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, saccade]),
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Enc-In-Stim': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, visual]),
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Mem-In-Stim': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, memory]),
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Sac-In-Stim': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, saccade]),
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Enc-diff': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, visual]) -
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, visual]),
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimVis').iloc[:, base_line(visual)]) -
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Mem-diff': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, memory]) -
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, memory]),
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inStimMem').iloc[:, base_line(visual)]) -
-                    computeSpikeCount(conditionSelect(allNeurons[b], 'inNoStim').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose(),
-                'Sac-diff': np.array([evoked_response_count(
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, saccade]) -
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, saccade]),
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inStimSac').iloc[:, base_line(visual)]) -
-                    computeSpikeCount(conditionSelect(saccad_df[b], 'inNoStim').iloc[:, base_line(visual)]))
-                    for b in range(len(allNeurons))], dtype=int).transpose()
-                }
+    neuronSetTime = time.time()
+    print('************************************ Start Neuronal Network Computation for ' + parrent_write_paths[i] +
+          ' neuron sets. ************************************')
 
-# network hyper parameter definition
+    args.write = writeArg + parrent_write_paths[i] + '/'
 
-network_hypers = {"p": args.sparsity, "allow_self_connections": args.self}
+    # Epoch discriminated spike dict data
 
-# get neural data information
-start_time = time.time()
-raw_neuronal_data_info_compute(allNeurons, args)
-split_epoch_condition(firingRate, spikeCounts, args)
-print('************ Raw data ingestion completed in' +
-      " %s seconds " % round((time.time() - start_time), 2) + ' ************')
+    firingRate = generate_lagged_all_epoch_dict(all_neuron_dict_list[i], all_saccade_dict_list[i], 0, 'evokedFr',
+                                                'pd.DataFrame')
+    spikeCounts = generate_lagged_all_epoch_dict(all_neuron_dict_list[i], all_saccade_dict_list[i], 0, 'evoked',
+                                                 'pd.DataFrame')
+    neuronalData = generate_lagged_all_epoch_dict(all_neuron_dict_list[i], all_saccade_dict_list[i], 0, 'evoked',
+                                                  'numpyArray')
 
-# Extract data and periods
-period, data = zip(*neuronalData.items())
+    # network hyper parameter definition
 
-# create fit_par partial function
-fit_par = partial(fit_model_discrete_time_network_hawkes_spike_and_slab, *[args, network_hypers, period, data])
+    network_hypers = {"p": args.sparsity, "allow_self_connections": args.self}
 
-start_time = time.time()
-list(tqdm.tqdm(pool.imap(fit_par, list(range(args.chain))), total=args.chain))
-print('************ MCMC estimation completed in'
-      + " %s hours " % round((time.time() - start_time)/(60*60), 4) + 'and for each chain in '
-      + " %s hours. " % round((time.time() - start_time)/(60*60*args.chain), 4) + ' ****')
+    # get neural data information
+    start_time = time.time()
+    raw_neuronal_data_info_compute(all_neuron_dict_list[i], args)
+    split_epoch_condition(firingRate, spikeCounts, args)
+    print('************ Raw data ingestion completed in' +
+          " %s minutes " % round((time.time() - start_time) / 60, 4) + ' ************')
 
-# Gelman-Rubin convergence statistics
-start_time = time.time()
-compute_gelman_rubin_convergence(args)
-print('************ GR statistics computation completed in' +
-      " %s seconds " % round((time.time() - start_time), 2) + '************')
-
-# create a list of all networks
-file_names = os.listdir(args.write + 'Firing Rate/')
-referencePath = args.write + '/MCMCResults/McMcValues/'
-
-start_time = time.time()
-for c in range(args.chain):
-    print('**** Start writing Network information of chain ' + str(c) + ' ****')
+    # Extract data and periods
+    period, data = zip(*neuronalData.items())
 
     # create fit_par partial function
-    pearson_par = partial(network_info_writer, *[args, referencePath, 0.5, 'pearson', c])
-    mutual_par = partial(network_info_writer, *[args, referencePath, 0.5, 'mutualScore', c])
-    hawkes_par = partial(network_info_writer, *[args, referencePath, 0.5, 'hawkes', c])
+    fit_par = partial(fit_model_discrete_time_network_hawkes_spike_and_slab, *[args, network_hypers, period, data])
 
-    # pearson
-    list(map(pearson_par, file_names))
-    # mutual information
-    list(map(mutual_par, file_names))
-    # hawkes
-    list(map(hawkes_par, file_names))
+    start_time = time.time()
+    list(tqdm.tqdm(pool.imap(fit_par, list(range(args.chain))), total=args.chain))
+    print('************ MCMC estimation completed in'
+          + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in '
+          + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4) + ' ****')
 
-print('**** Total Network information ingestion completed in'
-      + " %s hours " % round((time.time() - start_time)/(60*60), 4) + 'and for each chain in '
-      + " %s hours. " % round((time.time() - start_time)/(60*60*args.chain), 4) + ' ****')
+    # Gelman-Rubin convergence statistics
+    start_time = time.time()
+    compute_gelman_rubin_convergence(args)
+    print('************ GR statistics computation completed in' +
+          " %s minutes " % round((time.time() - start_time) / 60, 4) + '************')
 
+    # create a list of all networks
+    file_names = os.listdir(args.write + 'Firing Rate/')
+    referencePath = args.write + '/MCMCResults/McMcValues/'
 
-# Assemble all network data for all chain in one file
-start_time = time.time()
-network_data_path = args.write + '/NetworkInformations/'
-files = list(filter(lambda x: (x.endswith("__0.csv") & (not x.startswith("Raw")) &
-                               (not x.startswith("thresh"))), os.listdir(network_data_path + "Correlation")))
-files = list(map(lambda x: x.split("__")[0], files))
+    start_time = time.time()
+    for c in range(args.chain):
+        print('**** Start writing Network information of chain ' + str(c) + ' ****')
 
-method_list = ['Correlation', 'MutualInformation', 'Hawkes']
-all_df_list = [complete_df(network_data_path, x, y, z) for x in method_list for y in files for z in range(args.chain)]
-all_data = pd.concat(all_df_list)
+        # create fit_par partial function
+        pearson_par = partial(network_info_writer, *[args, referencePath, 0.75, 'pearson', c])
+        mutual_par = partial(network_info_writer, *[args, referencePath, 0.75, 'mutualScore', c])
+        ncs_par = partial(network_info_writer, *[args, referencePath, 0.75, 'ncs', c])
+        hawkes_par = partial(network_info_writer, *[args, referencePath, 0.75, 'hawkes', c])
 
-all_data.to_csv(network_data_path + "all_chain_network_info.csv", index=False)
-print('************ Concatenating all network information completed in' +
-      " %s seconds " % round((time.time() - start_time), 2) + '************')
+        # pearson
+        list(map(pearson_par, file_names))
+        # mutual information
+        list(map(mutual_par, file_names))
+        # ncs
+        list(map(ncs_par, file_names))
+        # hawkes
+        list(map(hawkes_par, file_names))
+
+    print('**** Total Network information ingestion completed in'
+          + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in '
+          + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4) + ' ****')
+
+    # Assemble all network data for all chain in one file
+    start_time = time.time()
+    network_data_path = args.write + '/NetworkInformations/'
+    files = list(filter(lambda x: (x.endswith("__0.csv") & (not x.startswith("Raw")) &
+                                   (not x.startswith("thresh"))), os.listdir(network_data_path + "Correlation")))
+    files = list(map(lambda x: x.split("__")[0], files))
+
+    method_list = ['Correlation', 'MutualInformation', 'Ncs', 'Hawkes']
+    all_df_list = [complete_df(network_data_path, x, y, z) for x in method_list for y in files for z in
+                   range(args.chain)]
+    all_data = pd.concat(all_df_list)
+
+    all_data.to_csv(network_data_path + "all_chain_network_info.csv", index=False)
+    print('************ Concatenating all network information completed in' +
+          " %s seconds " % round((time.time() - start_time), 2) + '************')
+
+    print('************************************ ' + parrent_write_paths[i] +
+          ' neuron sets computations' + 'completed in' +
+          " %s hours " % round((time.time() - neuronSetTime) / (60 * 60), 4) +
+          ' ************************************')
+
+print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% All evaluations completed in ' +
+      " %s hours " % round((time.time() - start_time_initial) / (60 * 60), 4) +
+      ' %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
