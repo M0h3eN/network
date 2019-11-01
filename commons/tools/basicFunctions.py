@@ -563,24 +563,32 @@ def set_neg_to_zero(data):
 def epoch_extractor(neurons_data: pd.core.frame.DataFrame, condition: str, time_period: np.ndarray, typ: str,
                     lag: int) -> np.ndarray:
     """
-    A function to extract neuronal data with spicifics epochs and various condition and evaluate either evocked
+    A function to extract neuronal data with spicifics epochs and various condition and evaluate either evoked
     response, spike count or raw spikes
     :param neurons_data: data set of all neurons
     :param condition: With stimmualtion -> {inStimVis, inStimMem, inStimSac, outStimVis, outStimMem, outStimSac},
      No stimmulation -> {inNoStim, outNoStim}
     :param time_period: visual, memory and saccade
-    :param typ: response type -> evocked, count, all_trials
+    :param typ: response type -> evoked, evokedFr, count, Fr, all_trials
     :param lag: time lag negative and positive for epochs
     :return: array of responses for all neurons across time
     """
-    if typ == 'evocked':
+    if typ == 'evoked':
         array_data = np.array([evoked_response_count(
             computeSpikeCount(conditionSelect(neurons_data[b], condition).iloc[:, time_period + lag]),
             computeSpikeCount(conditionSelect(neurons_data[b], condition).iloc[:, base_line(time_period + lag)]))
             for b in range(len(neurons_data))], dtype=int).transpose()
+    elif typ == 'evokedFr':
+        array_data = np.array([evoked_response(
+            computeFr(conditionSelect(neurons_data[b], condition).iloc[:, time_period + lag]),
+            computeFr(conditionSelect(neurons_data[b], condition).iloc[:, base_line(time_period + lag)]))
+            for b in range(len(neurons_data))], dtype=float).transpose()
     elif typ == 'count':
         array_data = np.array([computeSpikeCount(conditionSelect(neurons_data[b], condition).iloc[:, time_period + lag])
                                for b in range(len(neurons_data))], dtype=int).transpose()
+    elif typ == 'Fr':
+        array_data = np.array([computeFr(conditionSelect(neurons_data[b], condition).iloc[:, time_period + lag])
+                               for b in range(len(neurons_data))], dtype=float).transpose()
     else:
         array_data = np.array([np.array(conditionSelect(neurons_data[b], condition).iloc[:, time_period + lag]) for b in
                                range(len(neurons_data))], dtype=int)
@@ -601,7 +609,7 @@ def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.co
                   'Enc-In-Diff', 'Mem-In-Diff', 'Sac-In-Diff',
                   'Enc-Out-Diff', 'Mem-Out-Diff', 'Sac-Out-Diff'.
     :param lag: time lag negative and positive for epochs
-    :param typ: response type -> evocked, count, all_trials
+    :param typ: response type -> evoked, evokedFr, count, Fr, all_trials
     :return:
     """
     array_data = None
@@ -642,60 +650,92 @@ def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.co
         array_data = epoch_extractor(saccad_df, 'outStimSac', saccade, typ, lag)
 
     elif epoch == 'Enc-In-Diff':
-        if typ == 'evocked':
+        if typ != 'all_trials':
             array_data = epoch_extractor(neurons_df, 'inStimVis', visual, typ, lag) - epoch_extractor(neurons_df,
                                                                                                       'inNoStim',
                                                                                                       visual, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'inStimVis', visual, typ, lag).mean(axis=1) - epoch_extractor(
-                neurons_df, 'inNoStim', visual, typ, lag).mean(axis=1)
+            array_data = epoch_extractor(neurons_df, 'inStimVis', visual, typ, lag).sum(axis=1) - epoch_extractor(
+                neurons_df, 'inNoStim', visual, typ, lag).sum(axis=1)
     elif epoch == 'Mem-In-Diff':
-        if typ == 'evocked':
+        if typ != 'all_trials':
             array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag) - epoch_extractor(neurons_df,
                                                                                                       'inNoStim',
-                                                                                               visual, typ, lag)
+                                                                                                      visual, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag).mean(axis=1) - epoch_extractor(
-                neurons_df, 'inNoStim', visual, typ, lag).mean(axis=1)
+            array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag).sum(axis=1) - epoch_extractor(
+                neurons_df, 'inNoStim', visual, typ, lag).sum(axis=1)
     elif epoch == 'Sac-In-Diff':
-        if typ == 'evocked':
+        if typ != 'all_trials':
             array_data = epoch_extractor(saccad_df, 'inStimSac', saccade, typ, lag) - epoch_extractor(saccad_df,
                                                                                                       'inNoStim',
                                                                                                       saccade, typ, lag)
         else:
-            array_data = epoch_extractor(saccad_df, 'inStimSac', saccade, typ, lag).mean(axis=1) - epoch_extractor(
-                saccad_df, 'inNoStim', saccade, typ, lag).mean(axis=1)
+            array_data = epoch_extractor(saccad_df, 'inStimSac', saccade, typ, lag).sum(axis=1) - epoch_extractor(
+                saccad_df, 'inNoStim', saccade, typ, lag).sum(axis=1)
 
     elif epoch == 'Enc-Out-Diff':
-        if typ == 'evocked':
+        if typ != 'all_trials':
             array_data = epoch_extractor(neurons_df, 'outStimVis', visual, typ, lag) - epoch_extractor(neurons_df,
                                                                                                        'outNoStim',
                                                                                                        visual, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'outStimVis', visual, typ, lag).mean(axis=1) - epoch_extractor(
-                neurons_df, 'outNoStim', visual, typ, lag).mean(axis=1)
+            array_data = epoch_extractor(neurons_df, 'outStimVis', visual, typ, lag).sum(axis=1) - epoch_extractor(
+                neurons_df, 'outNoStim', visual, typ, lag).sum(axis=1)
     elif epoch == 'Mem-Out-Diff':
-        if typ == 'evocked':
+        if typ != 'all_trials':
             array_data = epoch_extractor(neurons_df, 'outStimMem', memory, typ, lag) - epoch_extractor(neurons_df,
                                                                                                        'outNoStim',
                                                                                                        memory, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'outStimMem', memory, typ, lag).mean(axis=1) - epoch_extractor(
-                neurons_df, 'outNoStim', memory, typ, lag).mean(axis=1)
+            array_data = epoch_extractor(neurons_df, 'outStimMem', memory, typ, lag).sum(axis=1) - epoch_extractor(
+                neurons_df, 'outNoStim', memory, typ, lag).sum(axis=1)
     elif epoch == 'Sac-Out-Diff':
-        if typ == 'evocked':
+        if typ != 'all_trials':
             array_data = epoch_extractor(saccad_df, 'outStimSac', saccade, typ, lag) - epoch_extractor(saccad_df,
                                                                                                        'outNoStim',
                                                                                                        saccade, typ,
                                                                                                        lag)
         else:
-            array_data = epoch_extractor(saccad_df, 'outStimSac', saccade, typ, lag).mean(axis=1) - epoch_extractor(
-                saccad_df, 'outNoStim', saccade, typ, lag).mean(axis=1)
+            array_data = epoch_extractor(saccad_df, 'outStimSac', saccade, typ, lag).sum(axis=1) - epoch_extractor(
+                saccad_df, 'outNoStim', saccade, typ, lag).sum(axis=1)
 
     else:
         raise ValueError("Epoch not recognized")
 
-    return array_data
+    array_dim = array_data.shape
+    if len(array_dim) > 2:
+        return array_data
+    else:
+        return set_neg_to_zero(array_data)
+
+
+def generate_lagged_all_epoch_dict(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.core.frame.DataFrame,
+                                   lag: int, typ: str, return_type: str) -> dict:
+    """
+    Create a dictionary of all epochs
+    :param neurons_df: data set of all neurons
+    :param saccad_df: data set of all saccade aligned neurons
+    :param lag: time lag negative and positive for epochs
+    :param typ: response type -> evoked, evokedFr, count, Fr, all_trials
+    :param return_type: Specify either numpy.ndarray or pandas.dataFrame
+    :return: A dict of either numpyArray or pandas dataFrame
+    """
+    epoch_list = ['Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim',
+                  'Enc-Out-NoStim', 'Mem-Out-NoStim', 'Sac-Out-NoStim',
+                  'Enc-In-Stim', 'Mem-In-Stim', 'Sac-In-Stim',
+                  'Enc-Out-Stim', 'Mem-Out-Stim', 'Sac-Out-Stim',
+                  'Enc-In-Diff', 'Mem-In-Diff', 'Sac-In-Diff',
+                  'Enc-Out-Diff', 'Mem-Out-Diff', 'Sac-Out-Diff']
+
+    out_dict = {}
+    if return_type == 'numpyArray':
+        for epoch in epoch_list:
+            out_dict[epoch] = generate_lagged_epochs(neurons_df, saccad_df, epoch, lag, typ)
+    else:
+        for epoch in epoch_list:
+            out_dict[epoch] = pd.DataFrame(generate_lagged_epochs(neurons_df, saccad_df, epoch, lag, typ))
+    return out_dict
 
 
 def fill_dict(dicts, totalValues):
@@ -718,6 +758,7 @@ def base_line(x): return np.arange((x[0] - 1) - len(x), (x[0] - 1))
 def get_mean_over_all_chains(path, epoch, chain_number):
     res = np.array([np.array(pd.read_csv(path + epoch + "__" + str(y) + ".csv")) for y in chain_number]).mean(axis=0)
     return res
+
 
 # A function to check significacy of a network measure
 def check_significance(data, neuron, method):
