@@ -65,22 +65,22 @@ epoch_list = ['Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim',
 
 lag_list = np.arange(-total_lag_ms, total_lag_ms + 1)
 
-partial_info_function_evocked = partial(compute_info_partial, *[allNeurons, saccad_df, method_list, lag_list, 'evocked'])
+partial_info_function_evoked = partial(compute_info_partial, *[allNeurons, saccad_df, method_list, lag_list, 'evoked'])
 partial_info_function_all = partial(compute_info_partial, *[allNeurons, saccad_df, method_list, lag_list, 'all_trials'])
 
 all_df_list_all = list(tqdm.tqdm(pool.imap(partial_info_function_all, epoch_list), total=len(epoch_list)))
-all_df_list_evocked = list(tqdm.tqdm(pool.imap(partial_info_function_evocked, epoch_list), total=len(epoch_list)))
+all_df_list_evoked = list(tqdm.tqdm(pool.imap(partial_info_function_evoked, epoch_list), total=len(epoch_list)))
 
 # Flatten the lists
 all_df_list_all = [item for sublist in all_df_list_all for item in sublist]
-all_df_list_evocked = [item for sublist in all_df_list_evocked for item in sublist]
+all_df_list_evoked = [item for sublist in all_df_list_evoked for item in sublist]
 
 
 all_data_all = pd.concat(all_df_list_all)
-all_data_evocked = pd.concat(all_df_list_evocked)
+all_data_evoked = pd.concat(all_df_list_evoked)
 
 all_data_all.to_csv(writePath + 'All' + '.csv', index=False)
-all_data_evocked.to_csv(writePath + 'Evoked' + '.csv', index=False)
+all_data_evoked.to_csv(writePath + 'Evoked' + '.csv', index=False)
 
 print('************ Network assembly information evaluator completed in' +
       " %s seconds " % round((time.time() - start_time), 2) + '************')
