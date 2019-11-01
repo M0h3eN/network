@@ -105,7 +105,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(args, hypers, period, 
             )
                       )) for s in samples])
 
-        colName = period[per] + '___' + str(chain)
+        colName = args.write.split('/')[-2] + '_' + period[per] + '___' + str(chain)
         paramValuesDB[colName].insert_many(All_samples_param)
 
         A_samples = np.array([s.weight_model.A for s in samples])
@@ -147,7 +147,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(args, hypers, period, 
                      'pV': pV,
                      'DIC': DIC}
 
-        colNameDiag = period[per] + '___' + str(chain)
+        colNameDiag = args.write.split('/')[-2] + '_' + period[per] + '___' + str(chain)
         diagnosticValuesDB[colNameDiag].insert_one(modelDiag)
         # Compute sample statistics for second half of samples
 
@@ -170,7 +170,7 @@ def fit_model_discrete_time_network_hawkes_spike_and_slab(args, hypers, period, 
         dataGraph = json_graph.adjacency_data(G0)
 
         nx.write_gml(G0, graphPah + period[per] + '___' + str(chain) + ".gml")
-        colNameGraph = period[per] + '___' + str(chain)
+        colNameGraph = args.write.split('/')[-2] + '_' + period[per] + '___' + str(chain)
         GraphDB[colNameGraph].insert_one(dataGraph)
 
 
