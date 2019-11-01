@@ -31,7 +31,7 @@ def raw_neuronal_data_info_compute(data, args):
 
     # inserting Firing rates
     firingRate = computerFrAllDict(data)
-    pre_proccess_db['firing_rate'].insert_many(firingRate)
+    pre_proccess_db['firing_rate' + '_' + args.write.split('/')[-2]].insert_many(firingRate)
 
     # saving PSTHs charts
     for iterator in range(len(saccade)):
@@ -41,7 +41,7 @@ def raw_neuronal_data_info_compute(data, args):
 
     # inserting Spike Counts
     spikeCounts = computeSpikeCountALLDict(data)
-    pre_proccess_db['spike_count'].insert_many(spikeCounts)
+    pre_proccess_db['spike_count' + '_' + args.write.split('/')[-2]].insert_many(spikeCounts)
 
     # inserting mutual information
 
@@ -49,7 +49,7 @@ def raw_neuronal_data_info_compute(data, args):
     mivaluesDict = dict(Stim=computeMI(data, saccade_data_set, 'Stim').to_dict('list'),
                         NoStim=computeMI(data, saccade_data_set, 'NoStim').to_dict('list'))
 
-    pre_proccess_db['mutual_information'].insert_one(mivaluesDict)
+    pre_proccess_db['mutual_information' + '_' + args.write.split('/')[-2]].insert_one(mivaluesDict)
 
     # saving Mutual information charts
 
