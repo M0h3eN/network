@@ -1,9 +1,27 @@
 import numpy as np
 import pandas as pd
+import zlib
 from sklearn.feature_selection import mutual_info_regression
 from sklearn.metrics import mutual_info_score
 from commons.tools.basicFunctions import normalize, generate_lagged_epochs
 from scipy.stats import pearsonr, wilcoxon
+from pyvlmc.internals import vlmc
+
+
+def ncs(x: np.ndarray, y: np.ndarray) -> float:
+    """
+    Evaluate The Normalized Compression Similarity NCS(x, y) = 1 - NCD(x, y)
+    :param x: numpy one dimension array of one neuron spike count
+    :param y: numpy one dimension array of one neuron spike count
+    :return: normalized compression similarity
+    """
+    x_compressed = zlib.compress(x)
+    y_compressed = zlib.compress(y)
+    x_y_compress = zlib.compress(np.concatenate([x, y]))
+
+    ncd = (len(x_y_compress) - min(len(x_compressed), len(y_compressed)))/max(len(x_compressed), len(y_compressed))
+    ncs = 1 - ncd
+    return ncs
 
 
 # methods are:
@@ -12,8 +30,15 @@ from scipy.stats import pearsonr, wilcoxon
 # 3- mutual information score (discreet) --- mutualScore
 
 
-def info(datax, datay, method='pearson'):
-
+def info(datax: pd.core.frame.DataFrame, datay: pd.core.frame.DataFrame, method: str = 'pearson') -> np.ndarray:
+    """
+    Evalute the neuronal information matrix
+    :param datax: neurons data frame
+    :param datay: possibly lagged neurons data frame
+    :type method: Information method including: 1- pearson, 2- mutual information (continuous) ---- mutual,
+    3- mutual information score (discreet) --- mutualScore and 4- normalized compression similarity ---- ncs.
+    :return: information matrix
+    """
     numeric_df_x = datax._get_numeric_data()
     numeric_df_y = datay._get_numeric_data()
     cols = numeric_df_x.columns
@@ -60,10 +85,21 @@ def info(datax, datay, method='pearson'):
                     c = corrf(matx[i, :], maty[j, :])
                 correl[i, j] = c
                 correl[j, i] = c
-
+    elif method == 'ncs':
+        corrf = ncs
+        for i in range(K):
+            for j in range(K):
+                if i > j:
+                    continue
+                elif i == j:
+                    c = 0.
+                else:
+                    c = corrf(matx[i, :], maty[j, :])
+                correl[i, j] = c
+                correl[j, i] = c
     else:
         raise ValueError("method must be either 'pearson', "
-                         "'mutual', or 'mutualScore', '{method}' "
+                         "'mutual', 'ncs' or 'mutualScore', '{method}' "
                          "was supplied".format(method=method))
 
     # Search for nan values and replace it with zero
@@ -122,7 +158,7 @@ def complete_info_df(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.core.fra
                   'Enc-Out-Diff', 'Mem-Out-Diff', 'Sac-Out-Diff'.
     :param method: information method -> correlation and mutual information
     :param lag: time lag negative and positive for epochs
-    :param typ: response type -> evocked, count, all_trials
+    :param typ: response type -> evoked, count, all_trials
     :return: Data frame of assembly information
     """
     df = pd.DataFrame()
@@ -130,7 +166,7 @@ def complete_info_df(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.core.fra
     df_zero = generate_lagged_epochs(neurons_df, saccad_df, epoch, 0, typ)
     df_lagged = generate_lagged_epochs(neurons_df, saccad_df, epoch, lag, typ)
 
-    if typ == 'evocked':
+    if typ == 'evoked':
         info_flat = info(pd.DataFrame(df_zero), pd.DataFrame(df_lagged), method).flatten()
     else:
         info_flat = get_mean_over_trials(df_zero, df_lagged, method)
@@ -170,4 +206,10 @@ def compute_info_partial(neurons_df, saccad_df, method_list, lag_list, typ, epoc
     info_list = [complete_info_df(neurons_df, saccad_df, 0.05, epoch, y, z, typ) for y in method_list for z in
                  lag_list]
     return info_list
+
+
+def compute_vlmc_for_each_trial(neuron: pd.core.frame.DataFrame, maxTime: int, number_of_column_added: int, trial: int):
+    contexClassVlmc = vlmc.fit_vlmc(neuron.iloc[trial, 0:(maxTime - number_of_column_added)])
+    return contexClassVlmc
+
 
