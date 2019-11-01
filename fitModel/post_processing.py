@@ -9,7 +9,6 @@ from commons.tools.basicFunctions import extract_from_dict, normalize
 
 
 def network_info_writer(args, referencePath, quant, method, chain, filename):
-
     global infoPath, thresh_network, network
     readPath = args.write + 'Spike Count/'
     writePath = args.write + 'NetworkInformations/'
@@ -20,13 +19,14 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
     data = pd.read_csv(readPath + filename)
 
     referenceFiles = list(filter(lambda x: x.endswith("__" + str(chain) + ".npy"), os.listdir(referencePath)))
-    referenceFileName = list(filter(lambda x: (x.startswith(filename.split(".")[0]) & x.endswith("__" + str(chain) +".npy")), referenceFiles))[0]
+    referenceFileName = list(
+        filter(lambda x: (x.startswith(filename.split(".")[0]) & x.endswith("__" + str(chain) + ".npy")),
+               referenceFiles))[0]
     referenceData = np.load(referencePath + referenceFileName)
     referenceDataShape = referenceData.shape[0]
     # select data after burn-in and the quantf as estimated values
-    referenceDataMean = np.mean(referenceData[referenceDataShape // 2:, :, :],  axis=0)
-    referenceDataQuantiled = np.quantile(referenceData[referenceDataShape//2:, :, :], quant, axis=0)
-
+    referenceDataMean = np.mean(referenceData[referenceDataShape // 2:, :, :], axis=0)
+    referenceDataQuantiled = np.quantile(referenceData[referenceDataShape // 2:, :, :], quant, axis=0)
 
     # Read correlation, mutual information and correlation p_values
     if method == 'pearson':
@@ -61,6 +61,16 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
         # Set threshold in connectivity matrix based on average p_values
         thresh_network = set_threshold(network, referenceDataQuantiled)
 
+    elif method == 'ncs':
+        infoPath = writePath + 'Ncs/'
+
+        if not os.path.exists(infoPath):
+            os.makedirs(infoPath)
+
+        network = info(datax=data, datay=data, method='ncs')
+        # Set threshold in connectivity matrix based on average p_values
+        thresh_network = set_threshold(network, referenceDataQuantiled)
+
     elif method == 'hawkes':
         infoPath = writePath + 'Hawkes/'
 
@@ -89,7 +99,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
     # values near -1 indicate lattice shape, value near to 1 indicate random graph
     # smallworldness index 2-Sigma: values greater than 1 indicate small world value property,
     # specifically when its greater or equal than 3
-    sigma, omega = gp.small_world_index(G, niter=100, nrand=16)
+    sigma, omega = gp.small_world_index(G, niter=100, nrand=100)
     # density
     dens = nx.density(G)
     # degree distribution
@@ -120,8 +130,10 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
     # Writing network info data
     centrality_data_frame.to_csv(infoPath + str(filename).split('.')[0] + "__" + str(chain) + ".csv", index=False)
     # Writing Raw data
-    pd.DataFrame(network, columns=labels).to_csv(infoPath + 'Raw-' + str(filename).split('.')[0] + "__" + str(chain) + ".csv", index=False)
-    pd.DataFrame(thresh_network, columns=labels).to_csv(infoPath + 'thresh-' + str(filename).split('.')[0] + "__" + str(chain) + ".csv", index=False)
+    pd.DataFrame(network, columns=labels).to_csv(
+        infoPath + 'Raw-' + str(filename).split('.')[0] + "__" + str(chain) + ".csv", index=False)
+    pd.DataFrame(thresh_network, columns=labels).to_csv(
+        infoPath + 'thresh-' + str(filename).split('.')[0] + "__" + str(chain) + ".csv", index=False)
 
 
 def complete_df(path, method, epoch, chain):
@@ -129,20 +141,14 @@ def complete_df(path, method, epoch, chain):
     df['method'] = method
     epoch_name_full = str(epoch).split('.')[0]
     epoch_name_sp = epoch_name_full.split('-')
-    if(epoch_name_sp[0] == 'Enc'):
+    if epoch_name_sp[0] == 'Enc':
         epoch_name_sp[0] = 'Vis'
-    if(len(epoch_name_sp) > 2):
-           epoch_name = epoch_name_sp[0] + '-' + epoch_name_sp[2]
+    if len(epoch_name_sp) > 2:
+        epoch_name = epoch_name_sp[0] + '-' + epoch_name_sp[2]
+        epoch_in_out = epoch_name_sp[1]
     else:
         epoch_name = epoch_name_sp[0] + '-' + epoch_name_sp[1]
     df['epoch'] = epoch_name
+    df['in/out'] = epoch_in_out
     df['chain'] = chain
     return df
-
-
-
-
-
-
-
-
