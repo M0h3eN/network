@@ -26,8 +26,8 @@ def compute_gelman_rubin_convergence(args):
 
     # MCMC chain
 
-    maxNumberOfChain = np.max([int(collectionNames[x].split("_")[3]) for x in range(len(collectionNames))])
-    models = np.unique(np.array(([collectionNames[x].split("_")[0] for x in range(len(collectionNames))])))
+    maxNumberOfChain = np.max([int(collectionNames[x].split("_")[4]) for x in range(len(collectionNames))])
+    models = np.unique(np.array(([collectionNames[x].split("_")[1] for x in range(len(collectionNames))])))
 
     for model in models:
 
