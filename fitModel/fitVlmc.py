@@ -11,11 +11,7 @@ from pyvlmc.internals.vlmc import simulate
 
 sys.setrecursionlimit(10000)
 
-# parallel computing config
-pool = Pool(cpu_count())
-
-
-def fit_VLMC(all_neurons, min_time, number_of_column_added):
+def fit_VLMC(all_neurons, min_time, number_of_column_added, pool):
     vlmc_fit_neurons = {}
     for iterat in range(len(all_neurons)):
         neuron = all_neurons[iterat]
