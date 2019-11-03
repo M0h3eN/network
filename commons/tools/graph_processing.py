@@ -4,15 +4,14 @@ import networkx as nx
 import pandas as pd
 import tqdm
 
-from multiprocessing import Pool, cpu_count
 from commons.tools.basicFunctions import rand_iterator
 
 
 # parallel computing config
-pool = Pool(cpu_count())
+# pool = Pool(cpu_count())
 
 # extract sigma and omega index (A fork from networkx functions, parallel versions)
-def small_world_index(G, niter=100, nrand=10, seed=None):
+def small_world_index(G, pool, niter=100, nrand=10, seed=None):
     """Returns the small-world coefficient (sigma) of the given graph.
 
     The small-world coefficient is defined as:
