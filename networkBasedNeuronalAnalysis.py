@@ -20,11 +20,11 @@ parser = ArgumentParser(description='This is a Python program for analysis on ne
 parser.add_argument('-d', '--data', action='store',
                     dest='data', help='Raw data directory')
 
-parser.add_argument('-H', '--host', action='store',
-                    default='localhost', dest='host', help='MongoDB host name')
-
-parser.add_argument('-p', '--port', action='store',
-                    default='27017', dest='port', help='MongoDB port number')
+# parser.add_argument('-H', '--host', action='store',
+#                     default='localhost', dest='host', help='MongoDB host name')
+#
+# parser.add_argument('-p', '--port', action='store',
+#                     default='27017', dest='port', help='MongoDB port number')
 
 parser.add_argument('-w', '--write', action='store',
                     dest='write', help='Output directory')
@@ -44,13 +44,16 @@ parser.add_argument('-i', '--iter', action='store',
 parser.add_argument('-c', '--chain', action='store',
                     dest='chain', help='Number of MCMC chain', type=int)
 
+parser.add_argument('-p', '--pool', action='store',
+                    dest='pool', help='Number of cpu', type=int)
+
 parser.add_argument('-v', '--version', action='version',
                     dest='', version='%(prog)s 0.1')
 
 args = parser.parse_args()
 
 # parallel computing config
-pool = Pool(cpu_count())
+pool = Pool(args.pool)
 
 # Data preparation
 start_time_initial = time.time()
@@ -72,7 +75,7 @@ start_time = time.time()
 
 print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Start Variable Length Markov Chains Fitting ' +
       '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
-allNeuronsVLMC = fit_VLMC(allNeurons, minTime, number_of_column_added)
+allNeuronsVLMC = fit_VLMC(allNeurons, minTime, number_of_column_added, pool)
 saccad_df_VLMC = saccade_df(allNeuronsVLMC, 3000)
 
 print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ VLMC fit completed in' +
@@ -123,7 +126,7 @@ for i in range(len(parrent_write_paths)):
 
     # get neural data information
     start_time = time.time()
-    raw_neuronal_data_info_compute(all_neuron_dict_list[i], args)
+    # raw_neuronal_data_info_compute(all_neuron_dict_list[i], args)
     split_epoch_condition(firingRate, spikeCounts, args)
     print('************ Raw data ingestion completed in' +
           " %s minutes " % round((time.time() - start_time) / 60, 4) + ' ************')
@@ -141,10 +144,10 @@ for i in range(len(parrent_write_paths)):
           + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4) + ' ****')
 
     # Gelman-Rubin convergence statistics
-    start_time = time.time()
-    compute_gelman_rubin_convergence(args)
-    print('************ GR statistics computation completed in' +
-          " %s minutes " % round((time.time() - start_time) / 60, 4) + '************')
+    # start_time = time.time()
+    # compute_gelman_rubin_convergence(args)
+    # print('************ GR statistics computation completed in' +
+    #       " %s minutes " % round((time.time() - start_time) / 60, 4) + '************')
 
     # create a list of all networks
     file_names = os.listdir(args.write + 'Firing Rate/')
