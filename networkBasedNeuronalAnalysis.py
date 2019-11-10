@@ -158,10 +158,10 @@ for i in range(len(parrent_write_paths)):
         print('**** Start writing Network information of chain ' + str(c) + ' ****')
 
         # create fit_par partial function
-        pearson_par = partial(network_info_writer, *[args, referencePath, 0.75, 'pearson', c])
-        mutual_par = partial(network_info_writer, *[args, referencePath, 0.75, 'mutualScore', c])
-        ncs_par = partial(network_info_writer, *[args, referencePath, 0.75, 'ncs', c])
-        hawkes_par = partial(network_info_writer, *[args, referencePath, 0.75, 'hawkes', c])
+        pearson_par = partial(network_info_writer, *[args, referencePath, 0.75, 'pearson', c, pool])
+        mutual_par = partial(network_info_writer, *[args, referencePath, 0.75, 'mutualScore', c, pool])
+        ncs_par = partial(network_info_writer, *[args, referencePath, 0.75, 'ncs', c, pool])
+        hawkes_par = partial(network_info_writer, *[args, referencePath, 0.75, 'hawkes', c, pool])
 
         # pearson
         list(map(pearson_par, file_names))
