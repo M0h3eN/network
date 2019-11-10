@@ -6,11 +6,10 @@ import networkx as nx
 from commons.selectivityMethods.general_information_calculator import info, set_threshold
 from commons.tools import graph_processing as gp
 from commons.tools.basicFunctions import extract_from_dict, normalize
-from multiprocessing import Pool
 
-def network_info_writer(args, referencePath, quant, method, chain, filename):
+
+def network_info_writer(args, referencePath, quant, method, chain, pool, filename):
     global infoPath, thresh_network, network
-    pool = Pool(args.pool)
 
     readPath = args.write + 'Spike Count/'
     writePath = args.write + 'NetworkInformations/'
@@ -28,7 +27,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
     referenceDataShape = referenceData.shape[0]
     # select data after burn-in and the quantf as estimated values
     referenceDataMean = np.mean(referenceData[referenceDataShape // 2:, :, :], axis=0)
-    referenceDataQuantiled = np.quantile(referenceData[referenceDataShape // 2:, :, :], quant, axis=0)
+    # referenceDataQuantiled = np.quantile(referenceData[referenceDataShape // 2:, :, :], quant, axis=0)
 
     # Read correlation, mutual information and correlation p_values
     if method == 'pearson':
@@ -40,7 +39,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
 
         network = info(datax=data, datay=data, method='pearson')
         # Set threshold in connectivity matrix based on average p_values
-        thresh_network = set_threshold(network, referenceDataQuantiled)
+        thresh_network = set_threshold(network, quant)
 
     elif method == 'mutual':
 
@@ -51,7 +50,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
 
         network = info(datax=data, datay=data, method='mutual')
         # Set threshold in connectivity matrix based on average p_values
-        thresh_network = set_threshold(network, referenceDataQuantiled)
+        thresh_network = set_threshold(network, quant)
 
     elif method == 'mutualScore':
         infoPath = writePath + 'MutualInformation/'
@@ -61,7 +60,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
 
         network = info(datax=data, datay=data, method='mutualScore')
         # Set threshold in connectivity matrix based on average p_values
-        thresh_network = set_threshold(network, referenceDataQuantiled)
+        thresh_network = set_threshold(network, quant)
 
     elif method == 'ncs':
         infoPath = writePath + 'Ncs/'
@@ -71,7 +70,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
 
         network = info(datax=data, datay=data, method='ncs')
         # Set threshold in connectivity matrix based on average p_values
-        thresh_network = set_threshold(network, referenceDataQuantiled)
+        thresh_network = set_threshold(network, quant)
 
     elif method == 'hawkes':
         infoPath = writePath + 'Hawkes/'
@@ -81,7 +80,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
 
         network = referenceDataMean
         # Set threshold in connectivity matrix based on average p_values
-        thresh_network = set_threshold(network, referenceDataQuantiled)
+        thresh_network = set_threshold(network, quant)
 
     labels = list(map(lambda x: 'N' + str(x + 1), range(thresh_network.shape[1])))
     labels = dict(zip(np.arange(0, len(labels)), labels))
@@ -101,7 +100,7 @@ def network_info_writer(args, referencePath, quant, method, chain, filename):
     # values near -1 indicate lattice shape, value near to 1 indicate random graph
     # smallworldness index 2-Sigma: values greater than 1 indicate small world value property,
     # specifically when its greater or equal than 3
-    sigma, omega = gp.small_world_index(G, pool, niter=100, nrand=100)
+    sigma, omega = gp.small_world_index(G, pool, niter=100, nrand=20)
     # density
     dens = nx.density(G)
     # degree distribution
