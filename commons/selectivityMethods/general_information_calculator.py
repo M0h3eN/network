@@ -19,7 +19,7 @@ def ncs(x: np.ndarray, y: np.ndarray) -> float:
     y_compressed = zlib.compress(y)
     x_y_compress = zlib.compress(np.concatenate([x, y]))
 
-    ncd = (len(x_y_compress) - min(len(x_compressed), len(y_compressed)))/max(len(x_compressed), len(y_compressed))
+    ncd = (len(x_y_compress) - min(len(x_compressed), len(y_compressed))) / max(len(x_compressed), len(y_compressed))
     ncs = 1 - ncd
     return ncs
 
@@ -108,20 +108,29 @@ def info(datax: pd.core.frame.DataFrame, datay: pd.core.frame.DataFrame, method:
     return np.array(correl, dtype=float)
 
 
-# set threshold based on p_value matrix
+# set threshold based on quantile or reference array
 
-def set_threshold(data, reference):
+def set_threshold(data, quant, reference=None):
 
     K = data.shape[0]
-    thresholded_mat = np.empty(data.shape, dtype=float)
+    threshold_mat = np.empty(data.shape, dtype=float)
+    specified_quantile = np.quantile(data.flatten(), quant, axis=0)
 
-    for i in range(K):
-        for j in range(K):
-            if reference[i, j] > 0:
-                thresholded_mat[i, j] = data[i, j]
-            else:
-                thresholded_mat[i, j] = 0
-    return thresholded_mat
+    if reference is None:
+        for i in range(K):
+            for j in range(K):
+                if data[i, j] >= specified_quantile:
+                    threshold_mat[i, j] = data[i, j]
+                else:
+                    threshold_mat[i, j] = 0
+    else:
+        for i in range(K):
+            for j in range(K):
+                if reference[i, j] > 0:
+                    threshold_mat[i, j] = data[i, j]
+                else:
+                    threshold_mat[i, j] = 0
+    return threshold_mat
 
 
 def get_mean_over_trials(arr: np.ndarray, arr_laged: np.ndarray, method: str) -> np.ndarray:
@@ -136,7 +145,7 @@ def get_mean_over_trials(arr: np.ndarray, arr_laged: np.ndarray, method: str) ->
     if len(np.shape(arr)) > 2:
         info_array = np.array([np.array(
             info(pd.DataFrame(arr[:, i, :]).transpose(), pd.DataFrame(arr_laged[:, i, :]).transpose(), method)) for i in
-                               range(shape_of_array)])
+            range(shape_of_array)])
     else:
         info_array = info(pd.DataFrame(arr.transpose()), pd.DataFrame(arr_laged.transpose()), method)
 
@@ -211,5 +220,3 @@ def compute_info_partial(neurons_df, saccad_df, method_list, lag_list, typ, epoc
 def compute_vlmc_for_each_trial(neuron: pd.core.frame.DataFrame, maxTime: int, number_of_column_added: int, trial: int):
     contexClassVlmc = vlmc.fit_vlmc(neuron.iloc[trial, 0:(maxTime - number_of_column_added)])
     return contexClassVlmc
-
-
