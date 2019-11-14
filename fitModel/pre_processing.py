@@ -3,7 +3,8 @@ import pandas as pd
 
 from bokeh.io import export_png
 from pymongo import MongoClient
-from commons.tools.basicFunctions import (computerFrAll, computerFrAllDict, computeSpikeCountALLDict, saccade_df)
+from commons.tools.basicFunctions import (computerFrAll, computerFrAllDict, computerFrAllDataFrame,
+                                          computeSpikeCountALLDict, saccade_df)
 from commons.selectivityMethods.mi import computeMI, plotScat, plotBar
 from commons.plotRelatedFunctions.FiringRateRelatedPlotFunctions import createPlotDF, plotFun
 
@@ -13,14 +14,24 @@ def raw_neuronal_data_info_compute(data, args):
     # path config
     writePathFr = args.write + 'Firing_Rate' + '/'
     writePathMi = args.write + 'Mutual_Information' + '/'
+    fratePath = args.write + 'Firing Rate' + '/'
 
     if not (os.path.exists(writePathFr) & os.path.exists(writePathMi)):
         os.makedirs(writePathFr)
         os.makedirs(writePathMi)
 
+    if not os.path.exists(fratePath):
+        os.makedirs(fratePath)
+
     # separating spikes epochs
     visualAndDelay = computerFrAll(data, 'vis')
     saccade = computerFrAll(data, 'saccade')
+
+    visualAndDelayDf = computerFrAllDataFrame(data, 'vis')
+    saccadeDf = computerFrAllDataFrame(data, 'saccade')
+
+    visualAndDelayDf.to_csv(index=False, path_or_buf=fratePath + 'VisAndMemFrAll' + '.csv')
+    saccadeDf.to_csv(index=False, path_or_buf=fratePath + 'SaccadeFrAll' + '.csv')
 
     # Mongo Configs
     client = MongoClient("mongodb://" + args.host + ':' + args.port)
