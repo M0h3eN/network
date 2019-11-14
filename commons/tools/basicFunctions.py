@@ -498,7 +498,13 @@ def complete_fr_df(neurons_df, neuron, condition, filter_method, min_time, max_t
     out_data_frame['condition'] = condition
     out_data_frame['filter'] = filter_method
     out_data_frame['neuron'] = str('N' + str(neuron + 1))
-    out_data_frame['time'] = np.arange(len(out_data_frame))
+    recording_time_ms = np.arange(len(out_data_frame)) + 1
+    out_data_frame['time'] = recording_time_ms
+
+    if max_time <= 3000:
+        out_data_frame['aligned_time'] = np.linspace(0, 3000, len(out_data_frame)) - 1000
+    else:
+        out_data_frame['aligned_time'] = np.linspace(0, 3400, len(out_data_frame)) - 3000
 
     return out_data_frame
 
