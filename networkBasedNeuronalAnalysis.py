@@ -11,7 +11,7 @@ from fitModel.pre_processing import raw_neuronal_data_info_compute, split_epoch_
 from fitModel.post_processing import network_info_writer, complete_df
 from fitModel.GelmanRubin_convergence import compute_gelman_rubin_convergence
 from fitModel.fitVlmc import fit_VLMC
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from functools import partial
 
 parser = ArgumentParser(description='This is a Python program for analysis on network of neurons to '
@@ -20,11 +20,11 @@ parser = ArgumentParser(description='This is a Python program for analysis on ne
 parser.add_argument('-d', '--data', action='store',
                     dest='data', help='Raw data directory')
 
-# parser.add_argument('-H', '--host', action='store',
-#                     default='localhost', dest='host', help='MongoDB host name')
-#
-# parser.add_argument('-p', '--port', action='store',
-#                     default='27017', dest='port', help='MongoDB port number')
+parser.add_argument('-H', '--host', action='store',
+                    default='localhost', dest='host', help='MongoDB host name')
+
+parser.add_argument('-p', '--port', action='store',
+                    default='27017', dest='port', help='MongoDB port number')
 
 parser.add_argument('-w', '--write', action='store',
                     dest='write', help='Output directory')
@@ -126,7 +126,7 @@ for i in range(len(parrent_write_paths)):
 
     # get neural data information
     start_time = time.time()
-    # raw_neuronal_data_info_compute(all_neuron_dict_list[i], args)
+    raw_neuronal_data_info_compute(all_neuron_dict_list[i], args)
     split_epoch_condition(firingRate, spikeCounts, args)
     print('************ Raw data ingestion completed in' +
           " %s minutes " % round((time.time() - start_time) / 60, 4) + ' ************')
@@ -144,10 +144,10 @@ for i in range(len(parrent_write_paths)):
           + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4) + ' ****')
 
     # Gelman-Rubin convergence statistics
-    # start_time = time.time()
-    # compute_gelman_rubin_convergence(args)
-    # print('************ GR statistics computation completed in' +
-    #       " %s minutes " % round((time.time() - start_time) / 60, 4) + '************')
+    start_time = time.time()
+    compute_gelman_rubin_convergence(args)
+    print('************ GR statistics computation completed in' +
+          " %s minutes " % round((time.time() - start_time) / 60, 4) + '************')
 
     # create a list of all networks
     file_names = os.listdir(args.write + 'Firing Rate/')
