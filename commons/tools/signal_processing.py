@@ -1,6 +1,6 @@
 import numpy as np
-
-# === === === === === === === === === === === === === === === === === === === === === === === === === == #Filters And Functions# === === === === === === === === === === === === === === === === === === === === === === === === === ==
+import scipy.stats as st
+import scipy.signal as sig
 
 #A wave deffination
 wave_sine = lambda amp, freq, phase, time: amp * np.sin(2 * np.pi * freq * time + phase)
@@ -35,3 +35,37 @@ def generalized_wavelet(signal, filter_sig):
     filtered_signal = np.convolve(signal, filter_sig, 'same')
     return filtered_signal
 
+
+def gen_fx_gsmooth(data, sigma=15):
+
+    if len(np.shape(data)) > 1:
+
+        m, n = np.shape(data)
+
+        if m > n:
+            data = np.transpose(data)
+
+        len_data = np.max([m, n])
+        y = st.norm.pdf(np.arange(-1*sigma, 1*(sigma+1)), 0, sigma)
+        y1 = np.tile(y, (len_data, 1))
+        len_y1 = np.shape(y1)[1]
+
+        for i in range(sigma + 1):
+            y1[i, 0:sigma - i] = 0
+            y1[(len_data - 1) - i, len_y1 - (sigma - i):len_y1] = 0
+
+        smoothed = sig.convolve2d(data, y[:, None], 'same') / np.sum(y1, axis=1)
+
+    else:
+        len_data = len(data)
+        y = st.norm.pdf(np.arange(-1 * sigma, 1 * (sigma + 1)), 0, sigma)
+        y1 = np.tile(y, (len_data, 1))
+        len_y1 = np.shape(y1)[1]
+
+        for i in range(sigma + 1):
+            y1[i, 0:sigma - i] = 0
+            y1[(len_data - 1) - i, len_y1 - (sigma - i):len_y1] = 0
+
+        smoothed = sig.convolve(data, y, 'same') / np.sum(y1, axis=1)
+
+    return smoothed
