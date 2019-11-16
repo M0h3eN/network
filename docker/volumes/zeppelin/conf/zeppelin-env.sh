@@ -94,7 +94,7 @@ export SPARK_SUBMIT_OPTIONS='--master local[*] --executor-memory 8G --driver-mem
 export ZEPPELIN_SPARK_MAXRESULT=1000000       # Max number of Spark SQL result to display. 1000 by default.
 export ZEPPELIN_INTERPRETER_OUTPUT_LIMIT=502400000
 export ZEPPELIN_WEBSOCKET_MAX_TEXT_MESSAGE_SIZE=502400000       # Size in characters of the maximum text message to be received by websocket. Defaults to 1024000
-
+export ZEPPELIN_MEM="-Xmx2048m -XX:MaxPermSize=1024m"
 
 #### HBase interpreter configuration ####
 
