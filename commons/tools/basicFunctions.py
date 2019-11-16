@@ -4,11 +4,12 @@ import numpy as np
 import pandas as pd
 import scipy.io as sio
 import networkx as nx
+import scipy.signal as sig
+import scipy.ndimage as sin
 
 from networkx import random_reference, lattice_reference
-
-# Columns name
 from scipy.stats import ttest_1samp
+from commons.tools.signal_processing import gen_fx_gsmooth
 
 
 def generatorTemp(size):
@@ -219,6 +220,65 @@ def assembleData2(directory):
     return neurons
 
 
+def assembleData2_gen_fx_gsmooth(directory, sigma):
+    dirr = directory
+    os.chdir(dirr)
+    filename = os.fsdecode(os.listdir(dirr).__getitem__(0))
+    neurons = {}
+    iter = 0
+    iterp = 0
+    mat_data = sio.loadmat(filename)
+    mat_data = mat_data[list(filter(lambda x: not x.startswith("__"), mat_data.keys())).__getitem__(0)]
+    mat_size = list(mat_data.shape)
+    mat_names = list(mat_data.dtype.names)
+
+    for iter0 in range(mat_size[0]):
+        for iter1 in range(mat_size[1]):
+            struct_data = mat_data[iter0, iter1]
+            conds = struct_data[mat_names.__getitem__(2)].T
+            spike_data = struct_data[mat_names.__getitem__(0)]
+            eye_data = struct_data[mat_names.__getitem__(3)]
+            spike_data_shape = list(spike_data.shape)
+            if conds.size > 0:
+                if len(spike_data_shape) > 2:
+                    for iter3 in range(spike_data_shape.__getitem__(2)):
+                        df = pd.DataFrame(gen_fx_gsmooth(spike_data[:, :, iter3], sigma))
+                        if sum(df.sum()) > 200:
+                            colName = generatorTemp(df.shape[1])
+                            df.columns = colName
+                            neurons[iter] = pd.concat([df, pd.DataFrame(conds, columns=['Cond'])], axis=1)
+                            neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
+                            neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
+                            neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
+                            print("Neuron" + str(iterp))
+                            iter = iter + 1
+                            iterp = iterp + 1
+                        else:
+                            print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            iter = iter
+                            iterp = iterp + 1
+                else:
+                    df = pd.DataFrame(gen_fx_gsmooth(spike_data, sigma))
+                    if sum(df.sum()) > 200:
+                        colName = generatorTemp(df.shape[1])
+                        df.columns = colName
+                        neurons[iter] = pd.concat([df, pd.DataFrame(conds, columns=['Cond'])], axis=1)
+                        neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
+                        neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
+                        neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
+                        print("Neuron" + str(iterp))
+                        iter = iter + 1
+                        iterp = iterp + 1
+                    else:
+                        print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        iterp = iterp + 1
+                        iter = iter
+            else:
+                print("Neuron" + str(iterp) + " " + "is empty")
+                iterp = iterp + 1
+
+    return neurons
+
 def saccade_df(neurons_df, align_point=3000):
     saccade_df = {}
     tmp_list1 = []
@@ -396,7 +456,6 @@ def conditionSelect(df, subStatus):
 
 def computerFrAll(neurons_df, period):
     lend = len(neurons_df)
-    saccade_data_frame = saccade_df(neurons_df)
     sep_by_cond = {}
     if period == 'vis':
         for it in range(lend):
@@ -409,17 +468,64 @@ def computerFrAll(neurons_df, period):
                                computeFr(conditionSelect(neurons_df[it],
                                                          'outNoStim'), 0, 3000)]
     else:
+        saccade_data_frame = saccade_df(neurons_df)
         for it in range(lend):
             inStimDF = conditionSelect(saccade_data_frame[it], 'inStim')
             outStimDF = conditionSelect(saccade_data_frame[it], 'outStim')
             inNoStimDF = conditionSelect(saccade_data_frame[it], 'inNoStim')
             outNoStimDF = conditionSelect(saccade_data_frame[it], 'outNoStim')
 
-            sep_by_cond[it] = [computeFr(inStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond") - 1)),
-                               computeFr(outStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond") - 1)),
-                               computeFr(inNoStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond") - 1)),
-                               computeFr(outNoStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond") - 1))]
+            sep_by_cond[it] = [computeFr(inStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond"))),
+                               computeFr(outStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond"))),
+                               computeFr(inNoStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond"))),
+                               computeFr(outNoStimDF, 0, (saccade_data_frame[it].columns.get_loc("Cond")))]
     return sep_by_cond
+
+
+def complete_fr_df(neurons_df, neuron, condition, filter_method, min_time, max_time):
+
+    out_data_frame = pd.DataFrame()
+    raw_fr = computeFr(conditionSelect(neurons_df[neuron], condition), min_time, max_time)
+    out_data_frame['raw_fr'] = raw_fr
+
+    if filter_method == 'gen_fx':
+        out_data_frame['filtered_fr'] = gen_fx_gsmooth(raw_fr, 60)
+    elif filter_method == 'savgol':
+        out_data_frame['filtered_fr'] = sig.savgol_filter(raw_fr, 215, 3)
+    else:
+        out_data_frame['filtered_fr'] = sin.gaussian_filter(raw_fr, 11)
+
+    out_data_frame['condition'] = condition
+    out_data_frame['filter'] = filter_method
+    out_data_frame['neuron'] = str('N' + str(neuron + 1))
+    recording_time_ms = np.arange(len(out_data_frame)) + 1
+    out_data_frame['time'] = recording_time_ms
+
+    if max_time <= 3000:
+        out_data_frame['aligned_time'] = np.linspace(0, 3000, len(out_data_frame)) - 1000
+    else:
+        out_data_frame['aligned_time'] = np.linspace(0, 3400, len(out_data_frame)) - 3000
+
+    return out_data_frame
+
+
+def computerFrAllDataFrame(neurons_df, period):
+
+    lend = len(neurons_df)
+    condition_list = ['inStim', 'outStim', 'inNoStim', 'outNoStim']
+    filter_method_list = ['gen_fx', 'savgol', 'gaussian']
+
+    if period == 'vis':
+        fr_list = [complete_fr_df(neurons_df, x, y, z, 0, 3000)
+                   for x in range(lend) for y in condition_list for z in filter_method_list]
+    else:
+        saccade_data_frame = saccade_df(neurons_df)
+        fr_list = [complete_fr_df(saccade_data_frame, x, y, z, 0, saccade_data_frame[x].columns.get_loc("Cond"))
+                   for x in range(lend) for y in condition_list for z in filter_method_list]
+
+    fr_long_df = pd.concat(fr_list, axis=0)
+
+    return fr_long_df
 
 
 def computerSpkCountAll(neurons_df, period):

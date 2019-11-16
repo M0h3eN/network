@@ -1,0 +1,18 @@
+version: "3.4"
+
+services:
+  zeppelin:
+    image: apache/zeppelin:0.8.2
+    ports:
+       - "8080:8080"
+       - "4042:4040"
+    volumes:
+     - "/home/mohsen/projects/docker/volumes/zeppelin/conf:/zeppelin/conf"
+     - "/home/mohsen/projects/docker/volumes/zeppelin/logs:/logs"
+     - "/home/mohsen/projects/docker/volumes/zeppelin/notebook:/zeppelin/notebook"
+     - "/home/mohsen/projects/docker/volumes/zeppelin/data:/data"
+     - "/home/mohsen/projects/docker/volumes/spark/conf:/opt/spark-2.4.4-bin-hadoop2.7/conf"
+     - "/opt/spark-2.4.4-bin-hadoop2.7:/opt/spark-2.4.4-bin-hadoop2.7"
+     - "/opt/jars:/opt/jars"
+    
+    
