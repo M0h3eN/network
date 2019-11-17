@@ -211,6 +211,50 @@ def complete_info_df(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.core.fra
     return df
 
 
+def complete_info_df_2(read_path, spiking_data, info_path, method: str, epoch: str, chain: str) -> pd.core.frame.DataFrame:
+    """
+    This function construct information detail data frame
+    :param read_path: parent global path
+    :param spiking_data: parent path which information dataFrame stored, VLMC or Raw
+    :param info_path: child path which information dataFrame stored
+    :param epoch: 'Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim',
+                  'Enc-Out-NoStim', 'Mem-Out-NoStim', 'Sac-Out-NoStim',
+                  'Enc-In-Stim', 'Mem-In-Stim', 'Sac-In-Stim',
+                  'Enc-Out-Stim', 'Mem-Out-Stim', 'Sac-Out-Stim',
+                  'Enc-In-Diff', 'Mem-In-Diff', 'Sac-In-Diff',
+                  'Enc-Out-Diff', 'Mem-Out-Diff', 'Sac-Out-Diff'.
+    :param method: information method -> correlation and mutual information
+    :param chain: MCMC chain number
+    :return: Data frame of assembly information
+    """
+    global epoch_in_out
+    df = pd.DataFrame()
+
+    info_flat = pd.read_csv(read_path + spiking_data + '/' + info_path + '/' + method + '/' +
+                            'thresh-' + epoch + '__' + chain + '.csv')
+    info_flat = np.array(info_flat).flatten()
+
+    df['info'] = pd.Series(info_flat)
+
+    epoch_name_full = str(epoch).split('.')[0]
+    epoch_name_sp = epoch_name_full.split('-')
+    if epoch_name_sp[0] == 'Enc':
+        epoch_name_sp[0] = 'Vis'
+    if len(epoch_name_sp) > 2:
+        epoch_name = epoch_name_sp[0] + '-' + epoch_name_sp[2]
+        epoch_in_out = epoch_name_sp[1]
+    else:
+        epoch_name = epoch_name_sp[0] + '-' + epoch_name_sp[1]
+
+    df['method'] = method
+    df['epoch'] = epoch_name
+    df['in/out'] = epoch_in_out
+    df['SpikingData'] = spiking_data
+    df['chain'] = str(chain)
+
+    return df
+
+
 def compute_info_partial(neurons_df, saccad_df, method_list, lag_list, typ, epoch):
     info_list = [complete_info_df(neurons_df, saccad_df, 0.05, epoch, y, z, typ) for y in method_list for z in
                  lag_list]
