@@ -93,7 +93,8 @@ def network_info_writer(args, referencePath, quant, method, chain, pool, filenam
     if nx.is_connected(G):
         asp = nx.average_shortest_path_length(G)
     else:
-        asp = np.mean([nx.average_shortest_path_length(g) for g in nx.connected_component_subgraphs(G)])
+        SG = [G.subgraph(c) for c in nx.connected_components(G)]
+        asp = np.mean([nx.average_shortest_path_length(g) for g in SG])
     # Clustering coefficient
     co = nx.average_clustering(G)
     # smallworldness index 1-Omega: values near zero indicates small world property,

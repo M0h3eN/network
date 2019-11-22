@@ -68,7 +68,8 @@ def small_world_index(G, pool, niter=100, nrand=10, seed=None):
     if nx.is_connected(G):
         L = nx.average_shortest_path_length(G)
     else:
-        L = np.mean([nx.average_shortest_path_length(g) for g in nx.connected_component_subgraphs(G)])
+        SG = [G.subgraph(c) for c in nx.connected_components(G)]
+        L = np.mean([nx.average_shortest_path_length(g) for g in SG])
     Cr = np.mean(randMetrics["C"])
     Cl = np.mean(randMetrics["Co"])
     Lr = np.mean(randMetrics["L"])
