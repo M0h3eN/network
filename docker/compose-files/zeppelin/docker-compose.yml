@@ -14,5 +14,6 @@ services:
      - "~/projects/network/docker/volumes/spark/conf:/opt/spark-2.4.4-bin-hadoop2.7/conf"
      - "/opt/spark-2.4.4-bin-hadoop2.7:/opt/spark-2.4.4-bin-hadoop2.7"
      - "/opt/jars:/opt/jars"
+    restart: unless-stopped
     
     
