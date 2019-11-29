@@ -6,6 +6,7 @@ import scipy.io as sio
 import networkx as nx
 import scipy.signal as sig
 import scipy.ndimage as sin
+import logging
 
 from networkx import random_reference, lattice_reference
 from scipy.stats import ttest_1samp, wilcoxon
@@ -109,7 +110,7 @@ def assembleData(directory):
     for file in os.listdir(dirr):
         filename = os.fsdecode(file)
         if filename.endswith('.mat'):
-            print('File:' + filename)
+            logging.info('File:' + filename)
             matData = sio.loadmat(filename)
             dictVal = matData.get('Res')
             Eye = dictVal['Eye']
@@ -133,11 +134,11 @@ def assembleData(directory):
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             allNeurons[iter] = pd.concat([neurons[iter],
                                                           generateEyeDF(Eye, dictVal['eyeData'])], axis=1)
-                            print("Neuron" + str(iter))
+                            logging.info("Neuron" + str(iter))
                             iter = iter + 1
                         else:
                             iter = iter
-                            print("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
     return allNeurons
 
 
@@ -161,9 +162,9 @@ def assembleData1(directory):
                                           axis=1)
                 neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                 neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
-                print("Neuron" + str(iter))
+                logging.info("Neuron" + str(iter))
             else:
-                print("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
+                logging.info("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
 
     return neurons
 
@@ -198,11 +199,11 @@ def assembleData2(directory):
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                            print("Neuron" + str(iterp))
+                            logging.info("Neuron" + str(iterp))
                             iter = iter + 1
                             iterp = iterp + 1
                         else:
-                            print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
                             iter = iter
                             iterp = iterp + 1
                 else:
@@ -214,15 +215,15 @@ def assembleData2(directory):
                         neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                         neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                         neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                        print("Neuron" + str(iterp))
+                        logging.info("Neuron" + str(iterp))
                         iter = iter + 1
                         iterp = iterp + 1
                     else:
-                        print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
                         iterp = iterp + 1
                         iter = iter
             else:
-                print("Neuron" + str(iterp) + " " + "is empty")
+                logging.info("Neuron" + str(iterp) + " " + "is empty")
                 iterp = iterp + 1
 
     return neurons
@@ -258,11 +259,11 @@ def assembleData2_gen_fx_gsmooth(directory, sigma):
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                            print("Neuron" + str(iterp))
+                            logging.info("Neuron" + str(iterp))
                             iter = iter + 1
                             iterp = iterp + 1
                         else:
-                            print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
                             iter = iter
                             iterp = iterp + 1
                 else:
@@ -274,15 +275,15 @@ def assembleData2_gen_fx_gsmooth(directory, sigma):
                         neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                         neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                         neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                        print("Neuron" + str(iterp))
+                        logging.info("Neuron" + str(iterp))
                         iter = iter + 1
                         iterp = iterp + 1
                     else:
-                        print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
                         iterp = iterp + 1
                         iter = iter
             else:
-                print("Neuron" + str(iterp) + " " + "is empty")
+                logging.info("Neuron" + str(iterp) + " " + "is empty")
                 iterp = iterp + 1
 
     return neurons

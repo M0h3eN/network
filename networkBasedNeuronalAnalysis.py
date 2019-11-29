@@ -15,7 +15,7 @@ from fitModel.fitVlmc import fit_VLMC
 from multiprocessing import Pool
 from functools import partial
 
-logging.basicConfig(filename='app.log', filemode='w', format='%(asctime)s - %(message)s', level=logging.INFO)
+logging.basicConfig(filename='log/app.log', filemode='w', format='%(asctime)s - %(message)s', level=logging.INFO)
 
 parser = ArgumentParser(description='This is a Python program for analysis on network of neurons to '
                                     'detect functional connectivity between neurons')
@@ -23,11 +23,11 @@ parser = ArgumentParser(description='This is a Python program for analysis on ne
 parser.add_argument('-d', '--data', action='store',
                     dest='data', help='Raw data directory')
 
-parser.add_argument('-H', '--host', action='store',
-                    default='localhost', dest='host', help='MongoDB host name')
-
-parser.add_argument('-p', '--port', action='store',
-                    default='27017', dest='port', help='MongoDB port number')
+# parser.add_argument('-H', '--host', action='store',
+#                     default='localhost', dest='host', help='MongoDB host name')
+#
+# parser.add_argument('-p', '--port', action='store',
+#                     default='27017', dest='port', help='MongoDB port number')
 
 parser.add_argument('-w', '--write', action='store',
                     dest='write', help='Output directory')
@@ -51,7 +51,7 @@ parser.add_argument('-p', '--pool', action='store',
                     dest='pool', help='Number of cpu', type=int)
 
 parser.add_argument('-sp', '--spiking', action='store',
-                    dest='pool', help='Spiking data', type=str)
+                    dest='spiking', help='Spiking data', type=str)
 
 parser.add_argument('-v', '--version', action='version',
                     dest='', version='%(prog)s 0.1')
