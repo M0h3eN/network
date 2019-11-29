@@ -76,12 +76,10 @@ def raw_neuronal_data_info_compute(data, args):
 
 def firing_rate_writer(data, args):
     # path config
-    writePathFr = args.write + 'Firing_Rate' + '/'
     writePathMi = args.write + 'Mutual_Information' + '/'
-    fratePath = args.write + 'Firing Rate' + '/'
+    fratePath = args.write + 'FiringRateFlatted' + '/'
 
-    if not (os.path.exists(writePathFr) & os.path.exists(writePathMi)):
-        os.makedirs(writePathFr)
+    if not os.path.exists(writePathMi):
         os.makedirs(writePathMi)
 
     if not os.path.exists(fratePath):
