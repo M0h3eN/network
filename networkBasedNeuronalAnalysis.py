@@ -15,7 +15,13 @@ from fitModel.fitVlmc import fit_VLMC
 from multiprocessing import Pool
 from functools import partial
 
-logging.basicConfig(filename='log/app.log', filemode='w', format='%(asctime)s - %(message)s', level=logging.INFO)
+log_path = os.path.dirname(os.path.abspath(__file__)) + '/log'
+
+if not os.path.exists(log_path):
+    os.makedirs(log_path)
+
+formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s", "%Y-%m-%d %H:%M:%S")
+logging.basicConfig(filename='log/app.log', filemode='w', format=formatter, level=logging.INFO)
 
 parser = ArgumentParser(description='This is a Python program for analysis on network of neurons to '
                                     'detect functional connectivity between neurons')
