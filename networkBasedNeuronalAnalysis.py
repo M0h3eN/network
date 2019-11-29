@@ -89,7 +89,7 @@ sorted_total_spike_count = sorted(tuple([(x, sum(allNeurons[x].iloc[:, 0:(minTim
 logging.info('Total spike count across neurons sorted ascending:')
 for x in range(len(sorted_total_spike_count)):
     logging.info('Neuron: ' + str(sorted_total_spike_count[x][0]) +
-                 ' Total Spike Count: ' + str(sorted_total_spike_count[x][1]))
+                 ' ---> Total Spike Count: ' + str(sorted_total_spike_count[x][1]))
 
 logging.info("Start evaluating significant neurons")
 start_time = time.time()
@@ -107,7 +107,7 @@ sorted_total_spike_count = sorted(tuple([(x, sum(allNeurons[x].iloc[:, 0:(minTim
 logging.info('Total spike count across significant neurons sorted ascending:')
 for x in range(len(sorted_total_spike_count)):
     logging.info('Neuron: ' + str(sorted_total_spike_count[x][0]) +
-                 ' Total Spike Count: ' + str(sorted_total_spike_count[x][1]))
+                 ' ---> Total Spike Count: ' + str(sorted_total_spike_count[x][1]))
 logging.info('Neurons significance check completed in:' + " %s minutes " % round((time.time() - start_time) / 60, 4))
 
 epoch_list = ['Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim']
@@ -148,7 +148,7 @@ if spiking_data == 'Raw':
     start_time = time.time()
     list(tqdm.tqdm(pool.imap(fit_par, list(range(args.chain))), total=args.chain))
     logging.info('MCMC estimation completed in'
-                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in '
+                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in'
                  + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4))
 
     # Gelman-Rubin convergence statistics
@@ -163,7 +163,7 @@ if spiking_data == 'Raw':
 
     start_time = time.time()
     for c in range(args.chain):
-        logging.info('Start writing Network information of chain' + "%s " % c)
+        logging.info('Start writing Network information of chain ' + "%s " % c)
 
         # create fit_par partial function
         pearson_par = partial(network_info_writer, *[args, referencePath, 0.75, 'pearson', c, pool])
@@ -181,7 +181,7 @@ if spiking_data == 'Raw':
         list(map(hawkes_par, file_names))
 
     logging.info('Total Network information ingestion completed in'
-                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in '
+                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in'
                  + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4))
 
     # Assemble all network data for all chain in one file
@@ -217,7 +217,7 @@ else:
     logging.info('Total VLMC fitted spike count across neurons sorted ascending')
     for x in range(len(sorted_total_spike_count_vlmc)):
         logging.info('Neuron: ' + str(sorted_total_spike_count_vlmc[x][0]) +
-                     ' Total Spike Count: ' + str(sorted_total_spike_count_vlmc[x][1]))
+                     ' ---> Total Spike Count: ' + str(sorted_total_spike_count_vlmc[x][1]))
 
     logging.info('VLMC fit completed in:' + " %s minutes " % round((time.time() - start_time) / 60, 4))
 
@@ -254,7 +254,7 @@ else:
     start_time = time.time()
     list(tqdm.tqdm(pool.imap(fit_par, list(range(args.chain))), total=args.chain))
     logging.info('MCMC estimation completed in'
-                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in '
+                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in'
                  + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4))
 
     # Gelman-Rubin convergence statistics
@@ -287,7 +287,7 @@ else:
         list(map(hawkes_par, file_names))
 
     logging.info('Total Network information ingestion completed in'
-                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in '
+                 + " %s hours " % round((time.time() - start_time) / (60 * 60), 4) + 'and for each chain in'
                  + " %s hours. " % round((time.time() - start_time) / (60 * 60 * args.chain), 4))
 
     # Assemble all network data for all chain in one file

@@ -64,5 +64,5 @@ data/gifs/test*.gif
 pyhawkes/internals/continuous_time_helpers.c
 pyhawkes/internals/parent_updates.c
 docker/volumes/zeppelin/data/
-docker/volumes/zeppelin/notebook/
 data/
+/docker/volumes/zeppelin/notebook/

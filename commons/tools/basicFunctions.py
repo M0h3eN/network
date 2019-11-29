@@ -134,11 +134,11 @@ def assembleData(directory):
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             allNeurons[iter] = pd.concat([neurons[iter],
                                                           generateEyeDF(Eye, dictVal['eyeData'])], axis=1)
-                            logging.info("Neuron" + str(iter))
+                            logging.info("Neuron " + str(iter))
                             iter = iter + 1
                         else:
                             iter = iter
-                            logging.info("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron " + str(iter) + " " + "got few action potentials, skipping...")
     return allNeurons
 
 
@@ -162,9 +162,9 @@ def assembleData1(directory):
                                           axis=1)
                 neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                 neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
-                logging.info("Neuron" + str(iter))
+                logging.info("Neuron " + str(iter))
             else:
-                logging.info("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
+                logging.info("Neuron " + str(iter) + " " + "got few action potentials, skipping...")
 
     return neurons
 
@@ -199,11 +199,11 @@ def assembleData2(directory):
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                            logging.info("Neuron" + str(iterp))
+                            logging.info("Neuron " + str(iterp))
                             iter = iter + 1
                             iterp = iterp + 1
                         else:
-                            logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                             iter = iter
                             iterp = iterp + 1
                 else:
@@ -215,15 +215,15 @@ def assembleData2(directory):
                         neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                         neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                         neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                        logging.info("Neuron" + str(iterp))
+                        logging.info("Neuron " + str(iterp))
                         iter = iter + 1
                         iterp = iterp + 1
                     else:
-                        logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                         iterp = iterp + 1
                         iter = iter
             else:
-                logging.info("Neuron" + str(iterp) + " " + "is empty")
+                logging.info("Neuron " + str(iterp) + " " + "is empty")
                 iterp = iterp + 1
 
     return neurons
@@ -259,11 +259,11 @@ def assembleData2_gen_fx_gsmooth(directory, sigma):
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                            logging.info("Neuron" + str(iterp))
+                            logging.info("Neuron " + str(iterp))
                             iter = iter + 1
                             iterp = iterp + 1
                         else:
-                            logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                             iter = iter
                             iterp = iterp + 1
                 else:
@@ -275,15 +275,15 @@ def assembleData2_gen_fx_gsmooth(directory, sigma):
                         neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                         neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                         neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                        logging.info("Neuron" + str(iterp))
+                        logging.info("Neuron " + str(iterp))
                         iter = iter + 1
                         iterp = iterp + 1
                     else:
-                        logging.info("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                         iterp = iterp + 1
                         iter = iter
             else:
-                logging.info("Neuron" + str(iterp) + " " + "is empty")
+                logging.info("Neuron " + str(iterp) + " " + "is empty")
                 iterp = iterp + 1
 
     return neurons
