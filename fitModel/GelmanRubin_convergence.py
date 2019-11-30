@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import logging
 from pymongo import MongoClient
 
 # compute GR convergence for all models
@@ -48,7 +49,7 @@ def compute_gelman_rubin_convergence(args):
 
         # ingest statistics to mongoDB
 
-        print('GR computing State:', '**** ', model, ' ****')
+        logging.info('GR computing State:', '**** ', model, ' ****')
 
         GRConvergenceDB[model].insert_one(rHat)
 

@@ -62,6 +62,12 @@
 </property>
 
 <property>
+  <name>zeppelin.python.maxResult</name>
+  <value>1000000</value>
+</property>
+
+
+<property>
   <name>zeppelin.notebook.homescreen.hide</name>
   <value>false</value>
   <description>hide homescreen notebook from list when this value set to true</description>

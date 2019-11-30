@@ -1,11 +1,10 @@
-import time
+import logging
 import pandas as pd
 import tqdm
 import sys
 
 from commons.selectivityMethods.general_information_calculator import compute_vlmc_for_each_trial
 from commons.tools.basicFunctions import generatorTemp
-from multiprocessing import Pool, cpu_count
 from functools import partial
 from pyvlmc.internals.vlmc import simulate
 
@@ -31,7 +30,7 @@ def fit_VLMC(all_neurons, min_time, number_of_column_added, pool):
 
         vlmc_fitted_data_frame = pd.concat([simul_data_frame, added_column_df], axis=1)
         vlmc_fit_neurons[iterat] = vlmc_fitted_data_frame
-        print('Fitted VLMC for neuron ' + str(iterat) + '.')
+        logging.info('Fitted VLMC for neuron ' + str(iterat) + '.')
 
     return vlmc_fit_neurons
 

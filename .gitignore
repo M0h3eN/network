@@ -65,3 +65,4 @@ pyhawkes/internals/continuous_time_helpers.c
 pyhawkes/internals/parent_updates.c
 docker/volumes/zeppelin/data/
 data/
+/docker/volumes/zeppelin/notebook/

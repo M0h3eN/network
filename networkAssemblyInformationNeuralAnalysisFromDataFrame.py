@@ -31,12 +31,7 @@ if not os.path.exists(writePath):
 
 spiking_data_list = ['Raw', 'VLMC']
 method_list = ['Correlation', 'MutualInformation', 'Ncs', 'Hawkes']
-epoch_list = ['Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim',
-              'Enc-Out-NoStim', 'Mem-Out-NoStim', 'Sac-Out-NoStim',
-              'Enc-In-Stim', 'Mem-In-Stim', 'Sac-In-Stim',
-              'Enc-Out-Stim', 'Mem-Out-Stim', 'Sac-Out-Stim',
-              'Enc-In-Diff', 'Mem-In-Diff', 'Sac-In-Diff',
-              'Enc-Out-Diff', 'Mem-Out-Diff', 'Sac-Out-Diff']
+epoch_list = ['Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim']
 chains_list = range(10)
 
 # Flatten the lists

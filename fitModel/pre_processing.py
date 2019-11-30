@@ -74,6 +74,24 @@ def raw_neuronal_data_info_compute(data, args):
     plotBar(mivaluesStim, writePathMi + 'barWithStim')
 
 
+def firing_rate_writer(data, args):
+    # path config
+    writePathMi = args.write + 'Mutual_Information' + '/'
+    fratePath = args.write + 'FiringRateFlatted' + '/'
+
+    if not os.path.exists(writePathMi):
+        os.makedirs(writePathMi)
+
+    if not os.path.exists(fratePath):
+        os.makedirs(fratePath)
+
+    visualAndDelayDf = computerFrAllDataFrame(data, 'vis')
+    saccadeDf = computerFrAllDataFrame(data, 'saccade')
+
+    visualAndDelayDf.to_csv(index=False, path_or_buf=fratePath + 'VisAndMemFrAll' + '.csv')
+    saccadeDf.to_csv(index=False, path_or_buf=fratePath + 'SaccadeFrAll' + '.csv')
+
+
 def split_epoch_condition(data_fr, data_sc, args):
     period_fr, data_fr = zip(*data_fr.items())
     period_sc, data_sc = zip(*data_sc.items())

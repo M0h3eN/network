@@ -6,22 +6,31 @@ import scipy.io as sio
 import networkx as nx
 import scipy.signal as sig
 import scipy.ndimage as sin
+import logging
 
 from networkx import random_reference, lattice_reference
-from scipy.stats import ttest_1samp
+from scipy.stats import ttest_1samp, wilcoxon
 from commons.tools.signal_processing import gen_fx_gsmooth
 
+from typing import Dict, List
 
-def generatorTemp(size):
+
+def generatorTemp(size: int) -> str:
+    """
+    A function to generate Time point names T0,T1,...
+    :param size: Time Sequence length
+    :rtype: str
+    """
     for ii in range(size):
         yield 'T' + str(ii)
 
 
-def _tolist(ndarray):
+def _tolist(ndarray: np.ndarray) -> list:
     """
     A recursive function which constructs lists from cellarrays
        (which are loaded as numpy ndarrays), recursion into the elements
        if they contain matobjects.
+       :type ndarray: np.ndarray
    """
     elem_list = []
     for sub_elem in ndarray:
@@ -101,7 +110,7 @@ def assembleData(directory):
     for file in os.listdir(dirr):
         filename = os.fsdecode(file)
         if filename.endswith('.mat'):
-            print('File:' + filename)
+            logging.info('File:' + filename)
             matData = sio.loadmat(filename)
             dictVal = matData.get('Res')
             Eye = dictVal['Eye']
@@ -125,11 +134,11 @@ def assembleData(directory):
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             allNeurons[iter] = pd.concat([neurons[iter],
                                                           generateEyeDF(Eye, dictVal['eyeData'])], axis=1)
-                            print("Neuron" + str(iter))
+                            logging.info("Neuron " + str(iter))
                             iter = iter + 1
                         else:
                             iter = iter
-                            print("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron " + str(iter) + " " + "got few action potentials, skipping...")
     return allNeurons
 
 
@@ -153,9 +162,9 @@ def assembleData1(directory):
                                           axis=1)
                 neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                 neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
-                print("Neuron" + str(iter))
+                logging.info("Neuron " + str(iter))
             else:
-                print("Neuron" + str(iter) + " " + "got few action potentials, skipping...")
+                logging.info("Neuron " + str(iter) + " " + "got few action potentials, skipping...")
 
     return neurons
 
@@ -190,11 +199,11 @@ def assembleData2(directory):
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                            print("Neuron" + str(iterp))
+                            logging.info("Neuron " + str(iterp))
                             iter = iter + 1
                             iterp = iterp + 1
                         else:
-                            print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                             iter = iter
                             iterp = iterp + 1
                 else:
@@ -206,15 +215,15 @@ def assembleData2(directory):
                         neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                         neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                         neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                        print("Neuron" + str(iterp))
+                        logging.info("Neuron " + str(iterp))
                         iter = iter + 1
                         iterp = iterp + 1
                     else:
-                        print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                         iterp = iterp + 1
                         iter = iter
             else:
-                print("Neuron" + str(iterp) + " " + "is empty")
+                logging.info("Neuron " + str(iterp) + " " + "is empty")
                 iterp = iterp + 1
 
     return neurons
@@ -250,11 +259,11 @@ def assembleData2_gen_fx_gsmooth(directory, sigma):
                             neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                             neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                             neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                            print("Neuron" + str(iterp))
+                            logging.info("Neuron " + str(iterp))
                             iter = iter + 1
                             iterp = iterp + 1
                         else:
-                            print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                            logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                             iter = iter
                             iterp = iterp + 1
                 else:
@@ -266,18 +275,19 @@ def assembleData2_gen_fx_gsmooth(directory, sigma):
                         neurons[iter]['stimStatus'] = np.where(neurons[iter]['Cond'] > 8, 0, 1)
                         neurons[iter]['inOutStatus'] = np.where(neurons[iter]['Cond'] % 2 == 1, 1, 0)
                         neurons[iter] = pd.concat([neurons[iter], generateEyeDF2(eye_data)], axis=1)
-                        print("Neuron" + str(iterp))
+                        logging.info("Neuron " + str(iterp))
                         iter = iter + 1
                         iterp = iterp + 1
                     else:
-                        print("Neuron" + str(iterp) + " " + "got few action potentials, skipping...")
+                        logging.info("Neuron " + str(iterp) + " " + "got few action potentials, skipping...")
                         iterp = iterp + 1
                         iter = iter
             else:
-                print("Neuron" + str(iterp) + " " + "is empty")
+                logging.info("Neuron " + str(iterp) + " " + "is empty")
                 iterp = iterp + 1
 
     return neurons
+
 
 def saccade_df(neurons_df, align_point=3000):
     saccade_df = {}
@@ -483,7 +493,6 @@ def computerFrAll(neurons_df, period):
 
 
 def complete_fr_df(neurons_df, neuron, condition, filter_method, min_time, max_time):
-
     out_data_frame = pd.DataFrame()
     raw_fr = computeFr(conditionSelect(neurons_df[neuron], condition), min_time, max_time)
     out_data_frame['raw_fr'] = raw_fr
@@ -505,7 +514,6 @@ def complete_fr_df(neurons_df, neuron, condition, filter_method, min_time, max_t
 
 
 def computerFrAllDataFrame(neurons_df, period):
-
     lend = len(neurons_df)
     condition_list = ['inStim', 'outStim', 'inNoStim', 'outNoStim']
     filter_method_list = ['gen_fx', 'savgol', 'gaussian']
@@ -630,6 +638,57 @@ def computeSpikeCountALLDict(neurons_df):
         }})
 
     return sep_by_cond
+
+
+def evaluate_neuron_significance_based_on_fixation(all_neuron_df: dict,
+                                                   saccade_data_frame: dict,
+                                                   fixation_max_time_point: int) -> Dict[int, pd.core.frame.DataFrame]:
+    """
+    Evalute which neuron is significant based on epoch comparision with fixation period of the neuron
+    :param all_neuron_df:
+    :param saccade_data_frame:
+    :param fixation_max_time_point:
+    :return: dictionary of significant neurons.
+    """
+    def df_slicer(df, s_df, fixation_max_time_point, row):
+        fixation = np.arange(0, fixation_max_time_point)
+        visual = np.arange(1051, 1251)
+        memory = np.arange(2500, 2700)
+        saccade = np.arange(2750, 2950)
+
+        sliced_df = pd.DataFrame()
+        sliced_df['Fixation'] = pd.Series(df.iloc[row, fixation].sum())
+        sliced_df['Visual'] = pd.Series(df.iloc[row, visual].sum())
+        sliced_df['Memory'] = pd.Series(df.iloc[row, memory].sum())
+        sliced_df['Saccade'] = pd.Series(s_df.iloc[row, saccade].sum())
+
+        return sliced_df
+
+    allNeuronsFiltered = {}
+    p_value_DF = pd.DataFrame(columns=['Vis', 'Mem', 'Sac', 'Is_significant'])
+
+    for iterate in range(len(all_neuron_df)):
+        df_cond_filter = conditionSelect(all_neuron_df[iterate], 'inNoStim')
+        s_df_cond_filter = conditionSelect(saccade_data_frame[iterate], 'inNoStim')
+
+        df_epoch_list = [df_slicer(df_cond_filter, s_df_cond_filter, fixation_max_time_point, i) for i in
+                         range(len(df_cond_filter))]
+        df_epoch = pd.concat(df_epoch_list, axis=0)
+        df_epoch = df_epoch.reset_index(drop=True)
+
+        vis_p = wilcoxon(df_epoch['Fixation'], df_epoch['Visual'])[1]
+        mem_p = wilcoxon(df_epoch['Fixation'], df_epoch['Memory'])[1]
+        sac_p = wilcoxon(df_epoch['Fixation'], df_epoch['Saccade'])[1]
+        p_val_counter = (vis_p < 0.05) | (mem_p < 0.05) | (sac_p < 0.05)
+
+        p_value_DF.loc[iterate] = pd.Series({'Vis': vis_p, 'Mem': mem_p, 'Sac': sac_p, 'Is_significant': p_val_counter})
+
+        allNeuronsFiltered[iterate] = df_epoch
+
+    significant_neuron_list = [all_neuron_df[x] for x in p_value_DF[(p_value_DF['Is_significant'] == True)].index.values]
+    significant_neuron_dict = {x: significant_neuron_list[x] for x in range(len(significant_neuron_list))}
+
+    return significant_neuron_dict
 
 
 # Graph processing functions
@@ -813,7 +872,8 @@ def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.co
 
 
 def generate_lagged_all_epoch_dict(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.core.frame.DataFrame,
-                                   lag: int, typ: str, return_type: str) -> dict:
+                                   lag: int, typ: str, return_type: str,
+                                   epoch_list: List[str] = None) -> dict:
     """
     Create a dictionary of all epochs
     :param neurons_df: data set of all neurons
@@ -821,14 +881,17 @@ def generate_lagged_all_epoch_dict(neurons_df: pd.core.frame.DataFrame, saccad_d
     :param lag: time lag negative and positive for epochs
     :param typ: response type -> evoked, evokedFr, count, Fr, all_trials
     :param return_type: Specify either numpy.ndarray or pandas.dataFrame
+    :param epoch_list: list of desired epochs to select
     :return: A dict of either numpyArray or pandas dataFrame
     """
-    epoch_list = ['Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim',
-                  'Enc-Out-NoStim', 'Mem-Out-NoStim', 'Sac-Out-NoStim',
-                  'Enc-In-Stim', 'Mem-In-Stim', 'Sac-In-Stim',
-                  'Enc-Out-Stim', 'Mem-Out-Stim', 'Sac-Out-Stim',
-                  'Enc-In-Diff', 'Mem-In-Diff', 'Sac-In-Diff',
-                  'Enc-Out-Diff', 'Mem-Out-Diff', 'Sac-Out-Diff']
+    if epoch_list is None:
+
+        epoch_list = ['Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim',
+                      'Enc-Out-NoStim', 'Mem-Out-NoStim', 'Sac-Out-NoStim',
+                      'Enc-In-Stim', 'Mem-In-Stim', 'Sac-In-Stim',
+                      'Enc-Out-Stim', 'Mem-Out-Stim', 'Sac-Out-Stim',
+                      'Enc-In-Diff', 'Mem-In-Diff', 'Sac-In-Diff',
+                      'Enc-Out-Diff', 'Mem-Out-Diff', 'Sac-Out-Diff']
 
     out_dict = {}
     if return_type == 'numpyArray':

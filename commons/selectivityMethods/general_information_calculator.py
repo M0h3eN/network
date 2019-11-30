@@ -3,8 +3,8 @@ import pandas as pd
 import zlib
 from sklearn.feature_selection import mutual_info_regression
 from sklearn.metrics import mutual_info_score
-from commons.tools.basicFunctions import normalize, generate_lagged_epochs
-from scipy.stats import pearsonr, wilcoxon
+from commons.tools.basicFunctions import generate_lagged_epochs
+from scipy.stats import wilcoxon
 from pyvlmc.internals import vlmc
 
 
