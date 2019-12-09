@@ -108,6 +108,9 @@ else:
     saccad_df = saccade_df(allNeurons, 3000)
     args.write = writeArg + spiking_data + '/'
 
+if not os.path.exists(args.write):
+    os.makedirs(args.write)
+
 logging.info("Start evaluating significant neurons")
 start_time = time.time()
 
