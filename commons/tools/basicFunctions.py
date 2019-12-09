@@ -12,7 +12,7 @@ from networkx import random_reference, lattice_reference
 from scipy.stats import ttest_1samp, wilcoxon
 from commons.tools.signal_processing import gen_fx_gsmooth
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 
 def generatorTemp(size: int) -> str:
@@ -642,16 +642,19 @@ def computeSpikeCountALLDict(neurons_df):
 
 def evaluate_neuron_significance_based_on_fixation(all_neuron_df: dict,
                                                    saccade_data_frame: dict,
-                                                   fixation_max_time_point: int) -> Dict[int, pd.core.frame.DataFrame]:
+                                                   fixation_min_time_point: int,
+                                                   fixation_max_time_point: int) -> \
+                                                   Tuple[dict, dict, dict, pd.core.frame.DataFrame]:
     """
     Evalute which neuron is significant based on epoch comparision with fixation period of the neuron
     :param all_neuron_df:
     :param saccade_data_frame:
+    :param fixation_min_time_point:
     :param fixation_max_time_point:
     :return: dictionary of significant neurons.
     """
-    def df_slicer(df, s_df, fixation_max_time_point, row):
-        fixation = np.arange(0, fixation_max_time_point)
+    def df_slicer(df, s_df, fixation_min_time_point, fixation_max_time_point, row):
+        fixation = np.arange(fixation_min_time_point, fixation_max_time_point)
         visual = np.arange(1051, 1251)
         memory = np.arange(2500, 2700)
         saccade = np.arange(2750, 2950)
@@ -664,6 +667,15 @@ def evaluate_neuron_significance_based_on_fixation(all_neuron_df: dict,
 
         return sliced_df
 
+    # def sig_index_df(indexe, epoch):
+    #
+    #     sig_DF = pd.DataFrame()
+    #     sig_DF['sig_neuron'] = pd.Series(str('N' + str(indexe + 1)))
+    #     sig_DF['epoch'] = pd.Series(epoch)
+    #
+    #     return sig_DF
+
+
     allNeuronsFiltered = {}
     p_value_DF = pd.DataFrame(columns=['Vis', 'Mem', 'Sac', 'Is_significant'])
 
@@ -671,8 +683,8 @@ def evaluate_neuron_significance_based_on_fixation(all_neuron_df: dict,
         df_cond_filter = conditionSelect(all_neuron_df[iterate], 'inNoStim')
         s_df_cond_filter = conditionSelect(saccade_data_frame[iterate], 'inNoStim')
 
-        df_epoch_list = [df_slicer(df_cond_filter, s_df_cond_filter, fixation_max_time_point, i) for i in
-                         range(len(df_cond_filter))]
+        df_epoch_list = [df_slicer(df_cond_filter, s_df_cond_filter, fixation_min_time_point,
+                                   fixation_max_time_point, i) for i in range(len(df_cond_filter))]
         df_epoch = pd.concat(df_epoch_list, axis=0)
         df_epoch = df_epoch.reset_index(drop=True)
 
@@ -685,10 +697,30 @@ def evaluate_neuron_significance_based_on_fixation(all_neuron_df: dict,
 
         allNeuronsFiltered[iterate] = df_epoch
 
-    significant_neuron_list = [all_neuron_df[x] for x in p_value_DF[(p_value_DF['Is_significant'] == True)].index.values]
-    significant_neuron_dict = {x: significant_neuron_list[x] for x in range(len(significant_neuron_list))}
+    l0 = list(p_value_DF[(p_value_DF['Vis'] < 0.05)].index.values)
+    l1 = list(p_value_DF[(p_value_DF['Mem'] < 0.05)].index.values)
+    l2 = list(p_value_DF[(p_value_DF['Sac'] < 0.05)].index.values)
 
-    return significant_neuron_dict
+    vis_indexes = pd.DataFrame(np.array(list(map(lambda x: 'N' + str(x + 1), l0))))
+    mem_indexes = pd.DataFrame(np.array(list(map(lambda x: 'N' + str(x + 1), l1))))
+    sac_idexes = pd.DataFrame(np.array(list(map(lambda x: 'N' + str(x + 1), l2))))
+
+    vis_indexes['epoch'] = 'Visual'
+    mem_indexes['epoch'] = 'Memory'
+    sac_idexes['epoch'] = 'Saccade'
+
+    # sig_df_list = [sig_index_df(x, y) for x in [vis_indexes, mem_indexes, sac_idexes] for y in ['Visual', 'Memory', 'Saccade']]
+    sig_df = pd.concat([vis_indexes, mem_indexes, sac_idexes], axis=0)
+
+    significant_neuron_list_vis = [all_neuron_df[x] for x in l0]
+    significant_neuron_list_mem = [all_neuron_df[x] for x in l1]
+    significant_neuron_list_sac = [all_neuron_df[x] for x in l2]
+
+    significant_neuron_dict_vis = {x: significant_neuron_list_vis[x] for x in range(len(significant_neuron_list_vis))}
+    significant_neuron_dict_mem = {x: significant_neuron_list_mem[x] for x in range(len(significant_neuron_list_mem))}
+    significant_neuron_dict_sac = {x: significant_neuron_list_sac[x] for x in range(len(significant_neuron_list_sac))}
+
+    return significant_neuron_dict_vis, significant_neuron_dict_mem, significant_neuron_dict_sac, sig_df
 
 
 # Graph processing functions
@@ -757,11 +789,12 @@ def epoch_extractor(neurons_data: pd.core.frame.DataFrame, condition: str, time_
     return array_data
 
 
-def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.core.frame.DataFrame, epoch: str,
-                           lag: int, typ: str) -> np.ndarray:
+def generate_lagged_epochs(vis_df: pd.core.frame.DataFrame, mem_df: pd.core.frame.DataFrame,
+                           saccad_df: pd.core.frame.DataFrame, epoch: str, lag: int, typ: str) -> np.ndarray:
     """
     Generate epochs based on epoch_extractor function with specified time lags based on time period
-    :param neurons_df: data set of all neurons
+    :param vis_df: data set of all neurons in visual epoch
+    :param mem_df: data set of all neurons in memory epoch
     :param saccad_df: data set of all saccade aligned neurons
     :param epoch: 'Enc-In-NoStim', 'Mem-In-NoStim', 'Sac-In-NoStim',
                   'Enc-Out-NoStim', 'Mem-Out-NoStim', 'Sac-Out-NoStim',
@@ -783,49 +816,49 @@ def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.co
     saccade = np.arange(2750, 2950)
 
     if epoch == 'Enc-In-NoStim':
-        array_data = epoch_extractor(neurons_df, 'inNoStim', visual, typ, lag)
+        array_data = epoch_extractor(vis_df, 'inNoStim', visual, typ, lag)
     elif epoch == 'Mem-In-NoStim':
-        array_data = epoch_extractor(neurons_df, 'inNoStim', memory, typ, lag)
+        array_data = epoch_extractor(mem_df, 'inNoStim', memory, typ, lag)
     elif epoch == 'Sac-In-NoStim':
         array_data = epoch_extractor(saccad_df, 'inNoStim', saccade, typ, lag)
 
     elif epoch == 'Enc-Out-NoStim':
-        array_data = epoch_extractor(neurons_df, 'outNoStim', visual, typ, lag)
+        array_data = epoch_extractor(vis_df, 'outNoStim', visual, typ, lag)
     elif epoch == 'Mem-Out-NoStim':
-        array_data = epoch_extractor(neurons_df, 'outNoStim', memory, typ, lag)
+        array_data = epoch_extractor(mem_df, 'outNoStim', memory, typ, lag)
     elif epoch == 'Sac-Out-NoStim':
         array_data = epoch_extractor(saccad_df, 'outNoStim', saccade, typ, lag)
 
     elif epoch == 'Enc-In-Stim':
-        array_data = epoch_extractor(neurons_df, 'inStimVis', visual, typ, lag)
+        array_data = epoch_extractor(vis_df, 'inStimVis', visual, typ, lag)
     elif epoch == 'Mem-In-Stim':
-        array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag)
+        array_data = epoch_extractor(mem_df, 'inStimMem', memory, typ, lag)
     elif epoch == 'Sac-In-Stim':
         array_data = epoch_extractor(saccad_df, 'inStimSac', saccade, typ, lag)
 
     elif epoch == 'Enc-Out-Stim':
-        array_data = epoch_extractor(neurons_df, 'outStimVis', visual, typ, lag)
+        array_data = epoch_extractor(vis_df, 'outStimVis', visual, typ, lag)
     elif epoch == 'Mem-Out-Stim':
-        array_data = epoch_extractor(neurons_df, 'outStimMem', memory, typ, lag)
+        array_data = epoch_extractor(mem_df, 'outStimMem', memory, typ, lag)
     elif epoch == 'Sac-Out-Stim':
         array_data = epoch_extractor(saccad_df, 'outStimSac', saccade, typ, lag)
 
     elif epoch == 'Enc-In-Diff':
         if typ != 'all_trials':
-            array_data = epoch_extractor(neurons_df, 'inStimVis', visual, typ, lag) - epoch_extractor(neurons_df,
+            array_data = epoch_extractor(vis_df, 'inStimVis', visual, typ, lag) - epoch_extractor(vis_df,
                                                                                                       'inNoStim',
                                                                                                       visual, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'inStimVis', visual, typ, lag).sum(axis=1) - epoch_extractor(
-                neurons_df, 'inNoStim', visual, typ, lag).sum(axis=1)
+            array_data = epoch_extractor(vis_df, 'inStimVis', visual, typ, lag).sum(axis=1) - epoch_extractor(
+                vis_df, 'inNoStim', visual, typ, lag).sum(axis=1)
     elif epoch == 'Mem-In-Diff':
         if typ != 'all_trials':
-            array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag) - epoch_extractor(neurons_df,
+            array_data = epoch_extractor(mem_df, 'inStimMem', memory, typ, lag) - epoch_extractor(mem_df,
                                                                                                       'inNoStim',
                                                                                                       visual, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'inStimMem', memory, typ, lag).sum(axis=1) - epoch_extractor(
-                neurons_df, 'inNoStim', visual, typ, lag).sum(axis=1)
+            array_data = epoch_extractor(mem_df, 'inStimMem', memory, typ, lag).sum(axis=1) - epoch_extractor(
+                mem_df, 'inNoStim', visual, typ, lag).sum(axis=1)
     elif epoch == 'Sac-In-Diff':
         if typ != 'all_trials':
             array_data = epoch_extractor(saccad_df, 'inStimSac', saccade, typ, lag) - epoch_extractor(saccad_df,
@@ -837,20 +870,20 @@ def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.co
 
     elif epoch == 'Enc-Out-Diff':
         if typ != 'all_trials':
-            array_data = epoch_extractor(neurons_df, 'outStimVis', visual, typ, lag) - epoch_extractor(neurons_df,
+            array_data = epoch_extractor(vis_df, 'outStimVis', visual, typ, lag) - epoch_extractor(vis_df,
                                                                                                        'outNoStim',
                                                                                                        visual, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'outStimVis', visual, typ, lag).sum(axis=1) - epoch_extractor(
-                neurons_df, 'outNoStim', visual, typ, lag).sum(axis=1)
+            array_data = epoch_extractor(vis_df, 'outStimVis', visual, typ, lag).sum(axis=1) - epoch_extractor(
+                vis_df, 'outNoStim', visual, typ, lag).sum(axis=1)
     elif epoch == 'Mem-Out-Diff':
         if typ != 'all_trials':
-            array_data = epoch_extractor(neurons_df, 'outStimMem', memory, typ, lag) - epoch_extractor(neurons_df,
+            array_data = epoch_extractor(mem_df, 'outStimMem', memory, typ, lag) - epoch_extractor(mem_df,
                                                                                                        'outNoStim',
                                                                                                        memory, typ, lag)
         else:
-            array_data = epoch_extractor(neurons_df, 'outStimMem', memory, typ, lag).sum(axis=1) - epoch_extractor(
-                neurons_df, 'outNoStim', memory, typ, lag).sum(axis=1)
+            array_data = epoch_extractor(mem_df, 'outStimMem', memory, typ, lag).sum(axis=1) - epoch_extractor(
+                mem_df, 'outNoStim', memory, typ, lag).sum(axis=1)
     elif epoch == 'Sac-Out-Diff':
         if typ != 'all_trials':
             array_data = epoch_extractor(saccad_df, 'outStimSac', saccade, typ, lag) - epoch_extractor(saccad_df,
@@ -871,12 +904,13 @@ def generate_lagged_epochs(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.co
         return set_neg_to_zero(array_data)
 
 
-def generate_lagged_all_epoch_dict(neurons_df: pd.core.frame.DataFrame, saccad_df: pd.core.frame.DataFrame,
-                                   lag: int, typ: str, return_type: str,
+def generate_lagged_all_epoch_dict(vis_df: pd.core.frame.DataFrame, mem_df: pd.core.frame.DataFrame,
+                                   saccad_df: pd.core.frame.DataFrame, lag: int, typ: str, return_type: str,
                                    epoch_list: List[str] = None) -> dict:
     """
     Create a dictionary of all epochs
-    :param neurons_df: data set of all neurons
+    :param vis_df: data set of all neurons in visual epoch
+    :param mem_df: data set of all neurons in memory epoch
     :param saccad_df: data set of all saccade aligned neurons
     :param lag: time lag negative and positive for epochs
     :param typ: response type -> evoked, evokedFr, count, Fr, all_trials
@@ -896,10 +930,10 @@ def generate_lagged_all_epoch_dict(neurons_df: pd.core.frame.DataFrame, saccad_d
     out_dict = {}
     if return_type == 'numpyArray':
         for epoch in epoch_list:
-            out_dict[epoch] = generate_lagged_epochs(neurons_df, saccad_df, epoch, lag, typ)
+            out_dict[epoch] = generate_lagged_epochs(vis_df, mem_df, saccad_df, epoch, lag, typ)
     else:
         for epoch in epoch_list:
-            out_dict[epoch] = pd.DataFrame(generate_lagged_epochs(neurons_df, saccad_df, epoch, lag, typ))
+            out_dict[epoch] = pd.DataFrame(generate_lagged_epochs(vis_df, mem_df, saccad_df, epoch, lag, typ))
     return out_dict
 
 

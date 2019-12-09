@@ -1,0 +1,10 @@
+{
+  "enabled": {
+    "zeppelin-aggrid": "zeppelin-aggrid@0.1.1",
+    "zeppelin-mathjax-spell": "zeppelin-mathjax-spell@0.0.1"
+  },
+  "packageConfig": {},
+  "bundleDisplayOrder": [
+    "zeppelin-aggrid"
+  ]
+}
